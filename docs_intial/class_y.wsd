@@ -1,0 +1,94 @@
+@startuml
+
+package com.sismics.reader.core.dao.file.html{
+
+    ' RssExtractor.java
+    class RssExtractor{
+        - {static} log: Logger
+        - url: URL
+        - feedList: List<String>
+        - readPage(is: InputStream): void
+        + getFeedList(): List<String>
+    }
+
+}
+
+package com.sismics.reader.core.dao.jpa.criteria{
+    
+    ' FeedCriteria.java
+    class FeedCriteria{
+        - feedUrl: String
+        - withUserSubscription: boolean
+        + isWithUserSubscription(): boolean
+        + setWithUserSubscription(withUserSubscription: boolean): FeedCriteria
+    }
+
+}
+
+package com.sismics.reader.core.dao.jpa{
+
+    'ArticleDao.java
+    class ArticleDao extends BaseDao{
+        # getQueryParam(criteria: ArticleCriteria, FilterCriteria: FilterCriteria): QueryParam
+        + create(article: Article): String
+        + update(article: Article): Article
+        + findAll(): List<Article>
+        + delete(id: String): void
+    }
+
+    ' composition or depedency idk 
+    ArticleDao ..> com.sismics.reader.core.dao.jpa.criteria.ArticleCriteria : manages 
+    ' composition
+    ArticleDao ..>  com.sismics.reader.core.dao.jpa.dto.ArticleDto : manages
+    ' dependency
+    ArticleDao ..> com.sismics.reader.core.model.jpa.Article : dependsOn
+
+    'AuthenticationTokenDao.java
+    class AuthenticationTokenDao{
+        + get(id: String): AuthenticationToken
+        + create(authenticationToken: AuthenticationToken): String
+        + delete(authenticationTokenId: String): void 
+        + deleteOldSessionToken(userId: String): void
+        + updateLastConnectionDate(id: String): void
+    }
+    ' dependency
+    AuthenticationTokenDao ..> com.sismics.reader.core.model.jpa.AuthenticationToken : manageAuthHTML
+
+    ' CategoryDao.java
+    class CategoryDao{
+        + create(category: Category): String
+        + update(category: Category): String
+        ' suppressWarning
+        + reorder(category: Category, order: int): void
+        + delete(id: String):void
+        + getRootCategory(userId: String): Category
+        + getCategory(id: String, userId: String): Category
+        + getCategoryCount(parentId: String, userId: String): int
+        ' suppressWarning
+        + findAllCategory(userId: String): List<Category>
+        ' suppressWarning
+        + findSubCategory(parentId: String, userId: String): List<Category>   
+    }
+    ' dependency 
+    CategoryDao ..> com.sismics.reader.core.model.jpa.Category : manageCategoryHTML
+
+
+    ' FeedDao.java
+    class FeedDao extends BaseDao{
+        # getQueryParam(criteria: FeedCriteria, filterCriteria: FilterCriteria): QueryParam
+        + create(feed: Feed): String
+        + delete(id: String): void
+        + getByRssUrl(rssUrl: String): Feed
+        + update(feed: Feed): Feed
+    }
+
+    ' idk to include the next 2 relation
+    ' FeedDao ..> com.sismics.reader.core.dao.jpa.criteria.FeedCriteria : dependsOn
+    ' FeedDao ..> com.sismics.reader.core.dao.jpa.dto.FeedDto : dependsOn
+    ' dependency
+    FeedDao ..> com.sismics.reader.core.model.jpa.Feed : managesFeedHTML
+
+
+}
+
+@enduml

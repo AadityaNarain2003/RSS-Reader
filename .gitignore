@@ -1,0 +1,14 @@
+/*/.classpath
+/*/.project
+/*/.settings
+/*/bin
+/*/gen
+/*/target
+*.iml
+.idea/
+/reader-web/src/main/webapp/sismicsreader
+/reader-web/src/main/webapp/node
+
+/reader-web/logging.txt
+/reader-web/seen.txt
+/reader-web/seen2.txt

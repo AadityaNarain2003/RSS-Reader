@@ -1,0 +1,143 @@
+{
+    "subscription": {
+        "title": "Breaking News Today, Top Headlines, Live Updates",
+        "feed_title": "Breaking News Today, Top Headlines, Live Updates",
+        "url": "https://www.thehindu.com/",
+        "rss_url": "https://www.thehindu.com/feeder/default.rss",
+        "description": "Today’s News Headlines, Breaking News &amp;amp; Latest News from India and World, News from Politics, Sports, Business, Arts and Entertainment",
+        "category_id": "admin-root",
+        "create_date": 1741976115960
+    },
+    "articles": [
+        {
+            "id": "516f464a-5a82-41e9-b0d2-97988adecac0",
+            "subscription": {
+                "id": "08a1a412-ee79-424d-a2b1-b786d2d4e79f",
+                "title": "Breaking News Today, Top Headlines, Live Updates"
+            },
+            "title": "A voluntary mandate: on the APAAR ID",
+            "url": "https://www.thehindu.com/opinion/editorial/a-voluntary-mandate-on-the-apaar-id/article69330705.ece",
+            "date": 1741978200000,
+            "description": "The APAAR ID should not be imposed without a law in place",
+            "is_read": true,
+            "is_starred": false
+        },
+        {
+            "id": "57cab307-76ce-4f08-b1ce-7d6558158109",
+            "subscription": {
+                "id": "08a1a412-ee79-424d-a2b1-b786d2d4e79f",
+                "title": "Breaking News Today, Top Headlines, Live Updates"
+            },
+            "title": "Some legislators ‘blackmailing’ govt. over dumping yards in their constituencies: DKS",
+            "url": "https://www.thehindu.com/news/cities/bangalore/some-legislators-blackmailing-govt-over-dumping-yards-in-their-constituencies-dks/article69331524.ece",
+            "date": 1741978052000,
+            "description": "",
+            "is_read": true,
+            "is_starred": false
+        },
+        {
+            "id": "074d8409-2ed9-4d7d-98db-023ddcb2feb7",
+            "subscription": {
+                "id": "08a1a412-ee79-424d-a2b1-b786d2d4e79f",
+                "title": "Breaking News Today, Top Headlines, Live Updates"
+            },
+            "title": "Modern day summitry, its perils and prospects",
+            "url": "https://www.thehindu.com/opinion/lead/modern-day-summitry-its-perils-and-prospects/article69331322.ece",
+            "date": 1741977960000,
+            "description": "Despite obtuse exercises such as the Trump-style meets, summit diplomacy could continue to occupy a vital place in modern international relations",
+            "is_read": true,
+            "is_starred": false
+        },
+        {
+            "id": "a18a6200-d1c3-4761-a3e7-c8a73ed71ae6",
+            "subscription": {
+                "id": "08a1a412-ee79-424d-a2b1-b786d2d4e79f",
+                "title": "Breaking News Today, Top Headlines, Live Updates"
+            },
+            "title": "Industrialists come together to set up a university",
+            "url": "https://www.thehindu.com/news/national/tamil-nadu/industrialists-come-together-to-set-up-a-university/article69330395.ece",
+            "date": 1741977909000,
+            "description": "Nayanta University to offer industry-integrated learning experience in its UG programmes",
+            "is_read": true,
+            "is_starred": false
+        },
+        {
+            "id": "a9b325cf-95b2-4e9b-84fb-21d700a8b29a",
+            "subscription": {
+                "id": "08a1a412-ee79-424d-a2b1-b786d2d4e79f",
+                "title": "Breaking News Today, Top Headlines, Live Updates"
+            },
+            "title": "Vulnerable Verstappen, worthy Norris, new-look Hamilton: as the plot of a fresh Formula One season begins to simmer, here’s what to look out for",
+            "url": "https://www.thehindu.com/sport/motorsport/vulnerable-verstappen-worthy-norris-new-look-hamilton-as-the-plot-of-a-fresh-formula-one-season-begins-to-simmer-heres-what-to-look-out-for/article69331708.ece",
+            "date": 1741977876000,
+            "description": "2025 is a landmark year for the most prestigious motor-racing series on the planet — the 75th anniversary of the championship. Sandwiched between a hotly contested 2024 and a step-into-the-unknown 2026, the upcoming season could be one for the ages",
+            "is_read": true,
+            "is_starred": false
+        },
+        {
+            "id": "384285d1-be13-4b45-8ef2-2138d99451a5",
+            "subscription": {
+                "id": "08a1a412-ee79-424d-a2b1-b786d2d4e79f",
+                "title": "Breaking News Today, Top Headlines, Live Updates"
+            },
+            "title": "Girls fall ill after miscreants spray coloured water laced with chemicals on them",
+            "url": "https://www.thehindu.com/news/national/karnataka/girls-fall-ill-after-miscreants-spray-coloured-water-laced-with-chemicals-on-them/article69331670.ece",
+            "date": 1741977775000,
+            "description": "",
+            "is_read": true,
+            "is_starred": false
+        },
+        {
+            "id": "6962af89-e301-4243-bafe-7c4bfe52a6ff",
+            "subscription": {
+                "id": "08a1a412-ee79-424d-a2b1-b786d2d4e79f",
+                "title": "Breaking News Today, Top Headlines, Live Updates"
+            },
+            "title": "Identities and symbols: on Tamil Nadu and the ‘Roo’",
+            "url": "https://www.thehindu.com/opinion/editorial/identities-and-symbols-on-tamil-nadu-and-the-roo/article69330724.ece",
+            "date": 1741977600000,
+            "description": "Cultural markers need not be seen as a challenge to nationalism",
+            "is_read": true,
+            "is_starred": false
+        },
+        {
+            "id": "9b1ced20-7526-4103-8c6b-f2a26db10596",
+            "subscription": {
+                "id": "08a1a412-ee79-424d-a2b1-b786d2d4e79f",
+                "title": "Breaking News Today, Top Headlines, Live Updates"
+            },
+            "title": "State government sanctions ₹352.50 crore more for paddy procurement",
+            "url": "https://www.thehindu.com/news/national/kerala/state-government-sanctions-35250-crore-more-for-paddy-procurement/article69331127.ece",
+            "date": 1741977549000,
+            "description": "",
+            "is_read": true,
+            "is_starred": false
+        },
+        {
+            "id": "2a3da421-cfca-4933-99dc-a2830f2d745b",
+            "subscription": {
+                "id": "08a1a412-ee79-424d-a2b1-b786d2d4e79f",
+                "title": "Breaking News Today, Top Headlines, Live Updates"
+            },
+            "title": "A school closure that must be called out",
+            "url": "https://www.thehindu.com/opinion/op-ed/a-school-closure-that-must-be-called-out/article69331346.ece",
+            "date": 1741977480000,
+            "description": "The order to close down Maharashtra’ only Gondi-medium school is also an affront to the Constitution",
+            "is_read": true,
+            "is_starred": false
+        },
+        {
+            "id": "f3fea658-95a0-43ec-a7dc-31a922c442bc",
+            "subscription": {
+                "id": "08a1a412-ee79-424d-a2b1-b786d2d4e79f",
+                "title": "Breaking News Today, Top Headlines, Live Updates"
+            },
+            "title": "Your childhood dream coming true doesn’t always happen, but it did for me: Amelia Kerr",
+            "url": "https://www.thehindu.com/sport/cricket/your-childhood-dream-coming-true-doesnt-always-happen-but-it-did-for-me-amelia-kerr/article69331694.ece",
+            "date": 1741977119000,
+            "description": "In this conversation, the ace all-rounder reflects on New Zealand’s T20 World Cup triumph, casts an eye on her time in the Women’s Premier League, and talks about leg-spin, her astonishing 232 not out, captaincy ambitions and why personal accolades don’t motivate her",
+            "is_read": true,
+            "is_starred": false
+        }
+    ]
+}

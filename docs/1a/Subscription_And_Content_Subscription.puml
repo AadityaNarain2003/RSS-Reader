@@ -1,0 +1,337 @@
+@startuml Subscription_And_Content_Subscription
+
+package "Subscription and Content Subsystem" {
+    package "com.sismics.reader.core.dao.jpa.dto"{
+        class FeedDto {
+            - String id
+            - String rssUrl
+        }
+        class FeedSubscriptionDto {
+            - id : String
+            - feedSubscriptionTitle : String
+            - feedTitle : String
+            - userId : String
+            - feedId : String
+            - feedRssUrl : String
+            - feedUrl : String
+            - feedDescription : String
+            - unreadUserArticleCount : int
+            - synchronizationFailCount : int
+            - createDate : Date
+            - categoryId : String
+            - categoryParentId : String
+            - categoryName : String
+            - categoryFolded : boolean
+        }
+        ' class JobDto {
+        '     - String id
+        '     - String name
+        '     - String userId
+        '     - Long createTimestamp
+        '     - Long startTimestamp
+        '     - Long endTimestamp
+        ' }
+        ' class JobEventDto {
+        '     - id : String
+        '     - name : String
+        '     - value : String
+        ' }
+
+        class UserArticleDto {
+            - id : String
+            - readTimestamp : Long
+            - starTimestamp : Long
+            - feedTitle : String
+            - feedSubscriptionId : String
+            - feedSubscriptionTitle : String
+            - articleId : String
+            - articleUrl : String
+            - articleGuid : String
+            - articleTitle : String
+            - articleCreator : String
+            - articleDescription : String
+            - articleCommentUrl : String
+            - articleCommentCount : Integer
+            - articleEnclosureUrl : String
+            - articleEnclosureLength : Integer
+            - articleEnclosureType : String
+            - articlePublicationTimestamp : Long
+
+        }
+        class ArticleDto {
+            - id : String
+            - url : String
+            - guid : String
+            - title : String
+            - creator : String
+            - description : String
+            - commentUrl : String
+            - commentCount : int
+            - enclosureUrl : String
+            - nclosureCount : int
+            - enclosureType : String
+            - publicationDate : Date
+            - createDate : Date
+            - feedId : String
+        }
+    }
+    ' package com.sismics.reader.core.dao.file.json {
+    '     class Feed {
+    '         - String url
+    '         - String baseUri
+    '         - String language
+    '     }
+    ' }
+        package com.sismics.reader.core.dao.file.opml {
+            ' class OpmlFlattener {
+            '     + {static} flatten(List<Outline> outlineList) : Map<String, List<Outline>>
+            '     - {static} flatten(List<Outline> outlineTree, Map<String, List<Outline>> outlineMap, String prefix) : void
+            '     - {static} getPrefix(Outline outline, String prefix) : String
+            ' }
+            class OpmlReader{
+                - content : String
+                - rootOutline : Outline
+                - currentOutline : Outline
+                ' - Element { UNKNOWN, OPML, BODY, OUTLINE } : enum
+                - currentElement : Element
+                - elementStack : Stack<Element>
+                - outlineStack : Stack<Outline>
+                + OpmlReader() : void
+                + read(InputStream is) : void
+                + getOutlineList() : List<Outline>
+                + startElement(String uri, String localName, String qName, Attributes attributes) : void
+                + endElement(String uri, String localName, String qName) : void
+                + characters(char[] ch, int start, int length) : void
+                - pushElement(Element newElement) : void
+                - popElement() : void
+            }
+            class Outline {
+                - text : String
+                - title : String
+                - type : String
+                - xmlUrl : String
+                - htmlUrl : String
+                - outlineList : List<Outline>
+                + Outline() : void
+                + getOutlineList() : List<Outline>
+            }
+        }
+        package com.sismics.reader.core.dao.file.json{
+            interface StarredArticleImportedListener {
+                + onStarredArticleImported(StarredArticleImportedEvent event) : void
+            }
+        }
+        package com.sismics.reader.core.dao.file.json{
+            class StarredReader {
+                ' - {static}  log : Logger for implementation not needed for the subsysytem
+                - StarredArticleImportedListener : starredArticleImportedListener
+                + read(InputStream is) : void
+                + setStarredArticleListener(StarredArticleImportedListener starredArticleListener) : void
+            }
+        }
+        package com.sismics.reader.core.dao.file.json{
+            class StarredArticleImportedEvent {
+                - Feed: feed
+                - Article: article
+                + getFeed() : Feed
+                + setFeed(Feed feed) : void
+                + getArticle() : Article
+                + setArticle(Article article) : void
+            }
+        }
+    package com.sismics.reader.core.model.jpa{
+        class Article {
+            - String guid
+            - String url
+            - String title
+            - String description
+            - String enclosureUrl
+            - Integer enclosureLength
+            - String enclosureType
+            + String getGuid()
+            + void setGuid(String guid)
+            + String getUrl()
+            + String getTitle()
+            + String getDescription()
+        }
+    }
+    package "com.sismics.reader.core.service" {
+        class FeedService {
+            + synchronizeAllFeeds(): void
+            + synchronize(url: String): Feed
+            + startUp(): void
+            + shutDown(): void
+            + runOneIteration(): void
+            - parseFeedOrPage(url: String): RssReader
+            - completeArticleList(articleList: List): void
+            # scheduler(): Scheduler
+        }
+    }
+    package com.sismics.reader.core.dao.file.rss {
+        class AtomArticleCommentUrlGuesserStrategy {
+            + guess(List<AtomLink> atomLinkList) : String
+        }
+        class AtomLink {
+            - rel : String
+            - type : String
+            - href : String
+            + AtomLink(String rel, String type, String href)
+        }
+        class AtomArticleUrlGuesserStrategy {
+            + guess(List<AtomLink> atomLinkList) : String
+        }
+        ' Atomlink class is not shown in diagram as it has only getter and setter methods which are required essentially user defined data types.
+        class AtomUrlGuesserStrategy {
+            + guessSiteUrl(List<AtomLink> atomLinkList) : String
+            + guessFeedUrl(List<AtomLink> atomLinkList) : String
+        }
+        class GuidFixer {
+            + {static} fixGuid(Article article) : void
+        }
+        GuidFixer ...> Article : uses
+        class RssReader{
+            ' - {static} log : Logger
+            - {static} DF_RSS : DateTimeFormatter
+            - {static} DF_ATOM : DateTimeFormatter
+            - {static} DF_DC : DateTimeFormatter
+            - content : String
+            - feed : Feed
+            - article : Article
+            - articleList : List<Article>
+            - atomLinkList : List<AtomLink>
+            - atomArticleLinkList : List<AtomLink>
+            - fatalErrorCount : int
+            - {static}  URI_XML : String
+            - {static}  URI_ATOM :  String
+            - {static}  URI_RDF : String
+            - {static}  URI_SLASH : String
+            - {static}  URI_DC : String
+            - {static}  URI_CONTENT : String
+            - {static}  URI_THREAD : String
+            - feedType : FeedType
+            - currentElement : Element
+            - elementStack : Stack<Element>
+            - {static} FATAL_ERROR_MAX : int
+            + readRssFeed(InputStream is): void
+            + startElement(String uri, String localName, String qName, Attributes attributes): void
+            + endElement(String uri, String localName, String qName): void
+            - pushElement(Element newElement): void
+            - popElement(): void
+            - validateFeed(): void
+            - fixGuid(): void
+            + characters(char[] ch, int start, int length): void
+            + fatalError(SAXParseException e): Exception
+            'should I include this?
+        }
+        class XmlReader {
+            - {static} HEADER_SIZE : int
+            - internalInputStreamReader : InputStreamReader
+            + XmlReader(InputStream in, String defaultEnc) <<not constructor>>
+            + close(): void
+            + read(char[] cbuf, int off, int len): int
+        }
+        ' class ReaderStandardAnalyzer {
+        '     + {static} int DEFAULT_MAX_TOKEN_LENGTH = 255
+        '     - int maxTokenLength
+        '     + {static} CharArraySet STOP_WORDS_SET
+        '     + ReaderStandardAnalyzer(Version matchVersion, CharArraySet stopWords)
+        '     + ReaderStandardAnalyzer(Version matchVersion)
+        '     + ReaderStandardAnalyzer(Version matchVersion, Reader stopwords) throws IOException
+        '     + setMaxTokenLength(int length): void
+        '     + getMaxTokenLength(): int
+        '     + createComponents(String fieldName, Reader reader): TokenStreamComponents
+        '     + initReader(String fieldName, Reader reader): Reader
+        ' }
+
+    }
+    package "com.sismics.reader.resource" {
+        class SubscriptionResource {
+            + list(unread: boolean): Response
+            + get(id: String, unread: boolean, limit: Integer, afterArticle: String): Response
+            + add(url: String, title: String): Response
+            + update(id: String, title: String, categoryId: String, order: Integer): Response
+            + delete(id: String): Response
+            + importFile(fileBodyPart: FormDataBodyPart): Response
+            + export(): Response
+            + favicon(id: String): Response
+        }
+        class ArticleResource {
+            + read(id: String): Response
+            + readMultiple(idList: List<String>): Response
+            + unread(id: String): Response
+            + unreadMultiple(idList: List<String>): Response
+        }
+
+        class AllResource {
+            + get(unread: boolean, limit: Integer, afterArticle: String): Response
+            + read(): Response
+        }
+    }
+
+    package "com.sismics.reader.rest.assembler" {
+        class ArticleAssembler {
+            + asJson(article: UserArticleDto): JSONObject
+        }
+    }
+
+    package com.sismics.reader.core.dao.file.html{
+
+        ' RssExtractor.java
+        class RssExtractor{
+            - {static} log: Logger
+            - url: URL
+            - feedList: List<String>
+            + RssExtractor(url: String)
+            - readPage (is: InputStream): void
+            + startElement(uri: String, localName: String, attributes: Attributes): void
+            + getFeedList(): List<String>
+        }
+
+        ' FeedChooserStrategy.java
+        class FeedChooserStrategy{
+            + guess(feedList: List<String>): String
+        }
+
+    }
+    StarredReader ...> com.sismics.reader.core.model.jpa.Feed : feed
+    StarredReader ...> com.sismics.reader.core.model.jpa.Article : article
+    StarredReader <-- "1" StarredArticleImportedListener : listens to
+    StarredArticleImportedEvent ...> com.sismics.reader.core.model.jpa.Feed : uses
+    StarredArticleImportedEvent ...> com.sismics.reader.core.model.jpa.Article : uses
+    AtomUrlGuesserStrategy ...> "uses" AtomLink
+    RssReader ...> com.sismics.reader.core.model.jpa.Feed : uses
+    RssReader ...> com.sismics.reader.core.model.jpa.Article : uses
+    RssReader ...> com.sismics.reader.core.dao.file.rss.XmlReader : uses
+    RssReader ...> com.sismics.reader.core.dao.file.rss.AtomArticleCommentUrlGuesserStrategy : uses
+    RssReader ...> com.sismics.reader.core.dao.file.rss.AtomArticleUrlGuesserStrategy : uses
+    SubscriptionResource -up-|> com.sismics.util.jpa.BaseDao 
+    ArticleResource -up-|> com.sismics.util.jpa.BaseDao
+    ArticleAssembler <-- com.sismics.reader.core.dao.jpa.dto.UserArticleDto : uses
+    AllResource -up-|> com.sismics.util.jpa.BaseDao
+    AllResource <-- com.sismics.reader.core.dao.jpa.FeedSubscriptionDao : uses
+    AllResource <-- com.sismics.reader.core.dao.jpa.UserArticleDao : uses
+    AllResource <-- com.sismics.reader.core.dao.jpa.criteria.FeedSubscriptionCriteria : uses
+    AllResource <-- com.sismics.reader.core.dao.jpa.criteria.UserArticleCriteria : uses
+    AllResource <-- com.sismics.reader.core.dao.jpa.dto.FeedSubscriptionDto : uses
+    AllResource <-- com.sismics.reader.core.dao.jpa.dto.UserArticleDto : uses
+    FeedService <-- com.sismics.reader.core.dao.file.html.FeedChooserStrategy : uses
+    FeedService <-- com.sismics.reader.core.dao.file.html.RssExtractor : uses
+    FeedService <-- com.sismics.reader.core.dao.file.rss.RssReader : uses
+    FeedService <-- com.sismics.reader.core.dao.jpa.criteria.ArticleCriteria : uses
+    FeedService <-- com.sismics.reader.core.dao.jpa.criteria.FeedCriteria : uses
+    FeedService <-- com.sismics.reader.core.dao.jpa.criteria.FeedSubscriptionCriteria : uses
+    FeedService <-- com.sismics.reader.core.dao.jpa.criteria.UserArticleCriteria : uses
+    FeedService <-- com.sismics.reader.core.dao.jpa.dto.ArticleDto : uses
+    FeedService <-- com.sismics.reader.core.dao.jpa.dto.FeedDto : uses
+    FeedService <-- com.sismics.reader.core.dao.jpa.dto.FeedSubscriptionDto : uses
+    FeedService <-- com.sismics.reader.core.dao.jpa.dto.UserArticleDto : uses
+    RssReader <-left- com.sismics.reader.core.model.jpa.Article : uses
+    RssReader <-left- com.sismics.reader.core.model.jpa.Feed : uses
+    GuidFixer <.. com.sismics.reader.core.model.jpa.Article : uses
+    OpmlReader ..> com.sismics.reader.core.dao.file.opml.Outline : uses
+    ' OpmlReader --|> DefaultHandler
+    ' RssReader --|> DefaultHandler
+    ' RssExtractor --|> DefaultHandler
+}
+
+@enduml

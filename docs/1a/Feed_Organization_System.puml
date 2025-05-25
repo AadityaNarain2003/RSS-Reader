@@ -1,0 +1,296 @@
+@startuml Feed_Organization_System
+
+package "Feed Organization Subsystem" {
+
+    package com.sismics.util.jpa{
+        abstract class BaseDao {
+            
+        }
+    }
+
+
+    package com.sismics.reader.core.dao.jpa.criteria{
+
+        ' ArticleCriteria.java
+        ' this
+        ' class ArticleCriteria{
+        '     - id: String
+        '     - guidIn: List<String>
+        '     - title: String
+        '     - url: String
+        '     - publicationDateMin: Date
+        '     - feedId: String
+        '     + getId(): String
+        '     + setId(id: String): ArticleCriteria
+        '     + getUrl(): String
+        '     + setUrl(url: String): ArticleCriteria
+        '     + getPublicationDateMin(): Date
+        '     + setPublicationDateMin(publicationDateMin: Date): ArticleCriteria
+        '     + getFeedId(): String
+        '     + setFeedId(feedId: String): ArticleCriteria
+        ' }
+
+        ' FeedCriteria.java
+        class FeedCriteria{
+            - feedUrl: String
+            - withUserSubscription: boolean
+            + isWithUserSubscription(): boolean
+        }
+
+        'FeedSubscriptionCriteria.java
+        class FeedSubscriptionCriteria{
+            - id: String
+            - userId: String
+            - feedId: String
+            - categoryId: String
+            - feedUrl: String
+            - unread: boolean
+            + isUnread(): boolean
+        }
+
+        'UserArticleCriteria.java
+
+        class UserArticleCriteria {
+            - userId: String
+            - feedId: String
+            - visible: boolean
+            - subscribed: boolean
+            - feedSubscriptionId: String
+            - categoryId: String
+            - unread: boolean
+            - starred: boolean
+            - articleId: String
+            - articleIdIn: List<String>
+            - userArticleId: String
+            - articlePublicationDateMax: Date
+            - userArticleStarredDateMax: Date
+            - articleIdMax: String
+            - userArticleIdMax: String
+            - fetchAllFeedSubscription: boolean
+
+           
+            + isVisible(): boolean
+           
+            + isSubscribed(): boolean
+           
+
+            + isUnread(): boolean
+            
+            + isStarred(): boolean
+            
+            + isFetchAllFeedSubscription(): boolean
+        }
+
+    }
+
+    package com.sismics.reader.core.dao.jpa.mapper{
+        ' ArticleMapper.java
+        class ArticleMapper extends ResultMapper{
+            + map(o: Object): ArticleDto
+        }
+
+        ' UserArticleMapper.java
+        class UserArticleMapper extends ResultMapper{
+            +map(o: Object): UserArticleDto
+        }
+
+        class FeedSubscriptionMapper extends ResultMapper{
+            +map(Object[] o): FeedSubscriptionDto
+        }
+
+        class FeedMapper extends ResultMapper{
+            +map(Object[] o): FeedMapper
+        }
+
+    }
+    UserArticleMapper ..> com.sismics.reader.core.dao.jpa.UserArticleDao
+
+    package com.sismics.reader.core.dao.jpa{
+        ' ArticleDao.java
+        class ArticleDao{
+            # getQueryParam(criteria: ArticleCriteria, FilterCriteria: FilterCriteria): QueryParam
+            + create(article: Article): String
+            + update(article: Article): Article
+            + findAll(): List<Article>
+            + delete(id: String): void
+        }
+
+        ' FeedDao.java
+        class FeedDao{
+            # getQueryParam(criteria: FeedCriteria, filterCriteria: FilterCriteria): QueryParam
+            + create(feed: Feed): String
+            + delete(id: String): void
+            + getByRssUrl(rssUrl: String): Feed
+            + update(feed: Feed): Feed
+        }
+
+        class FeedSubscriptionDao {
+            +String create(FeedSubscription feedSubscription)
+            +FeedSubscription update(FeedSubscription feedSubscription)
+            +void updateUnreadCount(String id, Integer unreadCount)
+            +void reorder(FeedSubscription feedSubscription, int order)
+            +void delete(String id)
+            +FeedSubscription getFeedSubscription(String id, String userId)
+            +List<FeedSubscription> findByCategory(String categoryId)
+            +int getCategoryCount(String categoryId, String userId)
+            -QueryParam getQueryParam(FeedSubscriptionCriteria criteria, FilterCriteria filterCriteria)
+        }
+
+        class UserArticleDao {
+            +getQueryParam(criteria: UserArticleCriteria, filterCriteria: FilterCriteria) : QueryParam
+            +create(userArticle: UserArticle) : String
+            +update(userArticle: UserArticle) : UserArticle
+            +markAsRead(criteria: UserArticleCriteria) : void
+            +delete(id: String) : void
+            +getUserArticle(id: String, userId: String) : UserArticle
+        }
+    }
+
+    ' package "core.service" {
+    '     class IndexingService {
+    '         - directory: Directory
+    '         - directoryReader: DirectoryReader
+    '         - luceneStorageConfig: String
+    '         + startUp(): void
+    '         + shutDown(): void
+    '         + searchArticles(userId: String, searchQuery: String, offset: Integer, limit: Integer): PaginatedList<UserArticleDto>
+    '         + rebuildIndex(): void
+    '         + getDirectory(): Directory
+    '         + getDirectoryReader(): DirectoryReader
+    '     }
+    ' }
+    package com.sismics.reader.core.dao.jpa {
+
+        ' class JobDao {
+        '     + create(job: Job): String
+        '     + getActiveJob(id: String): Job
+        '     + delete(id: String): void
+        '     + update(job: Job): Job
+        '     # getQueryParam(criteria: JobCriteria, filterCriteria: FilterCriteria): QueryParam
+        ' }
+
+        ' class JobEventDao {
+        '     + create(jobEvent: JobEvent): String
+        '     + delete(id: String): void
+        '     # getQueryParam(criteria: JobEventCriteria, filterCriteria: FilterCriteria): QueryParam
+        ' }
+        ' class RoleBaseFunctionDao {
+        '     +findByRoleId(String roleId) : List<String>
+        ' }
+        ' class ArticleDao {
+        '     + rebuildIndex(List<Article> articleList): void
+        '     + create(List<Article> articleList): void
+        '     + update(List<Article> articleList): void
+        '     + delete(List<Article> articleList): void
+        '     + search(PaginatedList<UserArticleDto> paginatedList, String searchQuery): Map<String, Article>
+        '     - getDocumentFromArticle(Article article): Document
+        ' }
+        class FeedSynchronizationDao {
+            + create(feedSynchronization: FeedSynchronization): String
+            + deleteOldFeedSynchronization(feedId: String, minutes: int): void
+            + findByFeedId(feedId: String): List<FeedSynchronization>
+        }
+
+        ' removed
+        ' class LocaleDao {
+        '     + getById(id: String): Locale
+        '     + findAll(): List<Locale>
+        ' }
+        ' LocaleDao ...> Locale : uses
+    }
+    package "com.sismics.reader.resource" {
+        class CategoryResource extends BaseResource {
+            + list(): Response
+            + add(name: String): Response
+            + update(id: String, name: String, order: Integer, folded: Boolean): Response
+            + delete(id: String): Response
+            + read(id: String): Response
+        }
+
+        class StarredResource extends BaseResource {
+            + get(limit: Integer, afterArticle: String): Response
+            + star(id: String): Response
+            + unstar(id: String): Response
+            + starMultiple(idList: List<String>): Response
+            + unstarMultiple(idList: List<String>): Response
+        }
+
+        class SearchResource extends BaseResource {
+            + get(query: String, limit: Integer, offset: Integer): Response
+        }
+
+        ' class JobResource extends BaseResource {
+        '     + delete(id: String): Response
+        ' }
+    }
+    package com.sismics.reader.core.model.jpa{
+
+        class FeedSubscription {
+            +id : String
+            +userId : String
+            +feedId : String
+            +categoryId : String
+            +title : String
+            +order : Integer
+            +unreadCount : Integer
+            +createDate : Date
+            +deleteDate : Date
+        }
+    }
+
+    ' package "core.util" {
+    '     class LuceneUtil {
+    '         + optimize(directory: Directory): void
+    '         + buildIndex(directory: Directory): void
+    '     }
+    ' }
+
+    FeedDao -up-|> com.sismics.util.jpa.BaseDao
+    ArticleDao -up-|> com.sismics.util.jpa.BaseDao
+    ' JobDao -up-|> com.sismics.util.jpa.BaseDao
+    ' BaseDao -up-|> com.sismics.reader.core.dao.jpa.JobEventDao
+
+    ' JobDao ..> com.sismics.reader.core.dao.jpa.dto.JobDto : uses
+    ' JobDao ..> com.sismics.reader.core.dao.jpa.criteria.JobCriteria
+    ' JobDao ..> com.sismics.reader.core.dao.jpa.mapper.JobMapper
+    ' JobDao .up.> com.sismics.reader.core.jpajpa.Job
+    ' JobDao --> com.sismics.reader.core.util.jpa.SortCriteria
+    ' JobDao --> com.sismics.util.jpa.filter.FilterCriteria
+    ' JobDao --> com.sismics.util.jpa.QueryParam
+    
+
+    ' JobEventDao ..> com.sismics.reader.core.dao.jpa.criteria.JobEventCriteria
+    ' JobEventDao .up.> com.sismics.reader.core.model.jpa.JobEvent
+    ' JobEventDao ..> com.sismics.reader.core.dao.jpa.dto.JobEventDto : uses
+    ' JobEventDao ..> com.sismics.reader.core.dao.jpa.mapper.JobEventMapper 
+    ' JobEventDao --> com.sismics.reader.core.util.jpa.SortCriteria
+    ' JobEventDao --> com.sismics.util.jpa.filter.FilterCriteria 
+    
+    ArticleDao ..> com.sismics.reader.core.dao.jpa.criteria.ArticleCriteria
+    ArticleDao ..> com.sismics.reader.core.dao.jpa.dto.ArticleDto : uses
+    ArticleDao ..> com.sismics.reader.core.dao.jpa.mapper.ArticleMapper
+    ArticleDao .up.> com.sismics.reader.core.model.jpa.Article
+    ArticleDao --> com.sismics.reader.core.util.jpa.SortCriteria
+
+    FeedDao ..> com.sismics.reader.core.dao.jpa.criteria.FeedCriteria
+    FeedDao ..> com.sismics.reader.core.dao.jpa.dto.FeedDto : uses
+    FeedDao <|-- com.sismics.reader.core.dao.jpa.mapper.FeedMapper : overrides
+    FeedDao ..> com.sismics.reader.core.model.jpa.Feed
+    FeedDao ..> com.sismics.reader.core.model.jpa.FeedSubscription : imports
+    ' UserArticleCriteria ..> com.sismics.reader.core.dao.jpa.UserArticleDao: imports  this
+    FeedSynchronizationDao ..> com.sismics.reader.core.model.jpa.FeedSynchronization
+    ArticleMapper ..> com.sismics.reader.core.dao.jpa.dto.ArticleDto : uses
+    FeedManager ..> com.sismics.reader.core.dao.jpa.dto.FeedDto : uses
+
+    StarredResource ..> com.sismics.reader.core.dao.jpa.criteria.UserArticleCriteria : imports
+    com.sismics.reader.core.dao.jpa.criteria.FeedSubscriptionCriteria ..> FeedSubscriptionDao: imports
+
+    FeedSubscriptionDao ..> com.sismics.reader.core.dao.jpa.dto.FeedSubscriptionDto
+    FeedSubscriptionDao ..> com.sismics.reader.core.dao.jpa.mapper.FeedSubscriptionMapper
+    FeedSubscriptionDao --|> com.sismics.util.jpa.BaseDao
+    FeedSubscriptionDao ..> com.sismics.reader.core.model.jpa.FeedSubscription : imports
+    UserArticleDao --|> com.sismics.util.jpa.BaseDao
+
+}
+
+@enduml

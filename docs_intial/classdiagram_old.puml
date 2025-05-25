@@ -1,0 +1,2095 @@
+@startuml
+
+' Packages
+package "com.sismics.reader.rest.assembler" {
+    class ArticleAssembler {
+        + {static} asJson(userArticle: UserArticleDto): JSONObject
+    }
+}
+
+package "com.sismics.reader.rest.constant" {
+    enum BaseFunction {
+        ADMIN
+        PASSWORD
+        IMPORT
+    }
+}
+
+package "com.sismics.reader.rest.dao" {
+    class ThemeDao {
+        + {static} STYLESHEETS_THEME_DIRS: List<String>
+        - {static} CSS_FILTER: FilenameFilter
+        + findAll(servletContext: ServletContext): List<String>
+    }
+}
+
+package "com.sismics.reader.rest.resource" {
+    abstract class BaseResource {
+        # request: HttpServletRequest
+        # appKey: String
+        # principal: IPrincipal
+        # authenticate(): boolean
+        # checkBaseFunction(baseFunction: BaseFunction): void
+        # hasBaseFunction(baseFunction: BaseFunction): boolean
+    }
+
+    class AllResource extends BaseResource {
+        + get(unread: boolean, limit: Integer, afterArticle: String): Response
+        + read(): Response
+    }
+
+    class AppResource extends BaseResource {
+        + version(): Response
+        + log(level: String, tag: String, message: String, limit: Integer, offset: Integer): Response
+        + batchReindex(): Response
+        + mapPort(): Response
+    }
+
+    class ArticleResource extends BaseResource {
+        + read(id: String): Response
+        + readMultiple(idList: List<String>): Response
+        + unread(id: String): Response
+        + unreadMultiple(idList: List<String>): Response
+    }
+
+    class CategoryResource extends BaseResource {
+        + list(): Response
+        + get(id: String, unread: boolean, limit: Integer, afterArticle: String): Response
+        + add(name: String): Response
+        + delete(id: String): Response
+        + read(id: String): Response
+        + update(id: String, name: String, order: Integer, folded: Boolean): Response
+    }
+
+    class JobResource extends BaseResource {
+        + delete(id: String): Response
+    }
+
+    class LocaleResource extends BaseResource {
+        + list(): Response
+    }
+
+    class SearchResource extends BaseResource {
+        + get(query: String, limit: Integer, offset: Integer): Response
+    }
+
+    class StarredResource extends BaseResource {
+        + get(limit: Integer, afterArticle: String): Response
+        + star(id: String): Response
+        + unstar(id: String): Response
+        + starMultiple(idList: List<String>): Response
+        + unstarMultiple(idList: List<String>): Response
+    }
+
+    class SubscriptionResource extends BaseResource {
+        + list(unread: boolean): Response
+        + get(id: String, unread: boolean, limit: Integer, afterArticle: String): Response
+        + add(url: String, title: String): Response
+        + update(id: String, title: String, categoryId: String, order: Integer): Response
+        + favicon(id: String): Response
+        + read(id: String): Response
+        + delete(id: String): Response
+        + importFile(fileBodyPart: FormDataBodyPart): Response
+        + export(): Response
+    }
+
+    class UserResource extends BaseResource {
+        + register(username: String, password: String, localeId: String, email: String): Response
+        + update(password: String, email: String, themeId: String, localeId: String, ...): Response
+        + checkUsername(username: String): Response
+        + login(username: String, password: String, longLasted: boolean): Response
+        + logout(): Response
+        + delete(): Response
+        + info(): Response
+        + list(limit: Integer, offset: Integer, sortColumn: Integer, asc: Boolean): Response
+    }
+}
+
+package "com.sismics.reader.rest.util" {
+    class ValidationUtil {
+        + {static} validateTheme(servletContext: ServletContext, themeId: String, name: String, nullable: boolean): String
+        + {static} validateLocale(localeId: String, name: String, nullable: boolean): String
+    }
+}
+
+' Relationships
+ArticleAssembler ..> "uses" UserArticleDto
+BaseResource ..> "uses" BaseFunction
+UserResource ..> "uses" ValidationUtil
+SubscriptionResource ..> "uses" ValidationUtil
+ThemeDao ..> "uses" ServletContext
+
+
+package "com.sismics.reader.core.service" {
+    class FeedService {
+        -log: Logger
+        +startUp()
+        +shutDown()
+        +runOneIteration()
+        +scheduler()
+        +synchronizeAllFeeds()
+        +synchronize(url: String)
+    }
+
+    class IndexingService {
+        -log: Logger
+        -directory: Directory
+        -directoryReader: DirectoryReader
+        -luceneStorageConfig: String
+        +startUp()
+        +shutDown()
+        +runOneIteration()
+        +searchArticles()
+        +rebuildIndex()
+        +getDirectory()
+        +getDirectoryReader()
+    }
+    
+    FeedService --> IndexingService
+}
+
+package "com.sismics.reader.core.util" {
+    class ConfigUtil {
+        +{static} getConfigStringValue(configType: ConfigType)
+        +{static} getConfigBundle()
+        +{static} getConfigIntegerValue(configType: ConfigType)
+        +{static} getConfigBooleanValue(configType: ConfigType)
+    }
+
+    class DirectoryUtil {
+        +{static} getBaseDataDirectory()
+        +{static} getDbDirectory()
+        +{static} getFaviconDirectory()
+        +{static} getLuceneDirectory()
+        +{static} getLogDirectory()
+        -{static} getDataSubDirectory(subdirectory: String)
+    }
+
+    class EntityManagerUtil {
+        +{static} flush()
+    }
+
+    class LuceneUtil {
+        -log: Logger
+        +{static} handle(runnable: LuceneRunnable)
+    }
+
+    interface LuceneRunnable {
+        +run(indexWriter: IndexWriter)
+    }
+
+    class StreamUtil {
+        +{static} detectGzip(is: InputStream)
+    }
+
+    class TransactionUtil {
+        -log: Logger
+        +{static} handle(runnable: Runnable)
+        +{static} commit()
+    }
+
+    class UserUtil {
+        +{static} getUserName(user: User)
+    }
+
+    ConfigUtil --> DirectoryUtil
+    TransactionUtil --> EntityManagerUtil
+    LuceneUtil --> DirectoryUtil
+    UserUtil --> ConfigUtil
+}
+
+package "com.sismics.reader.core.util.http" {
+    abstract class ReaderHttpClient<T> {
+        -USER_AGENT: String
+        -timeout: int
+        +open(url: URL): T
+        +process(is: InputStream): T
+        +setTimeout(timeout: int)
+    }
+}
+
+package "com.sismics.reader.core.util.jpa" {
+    class PaginatedList<T> {
+        -limit: int
+        -offset: int
+        -resultCount: int
+        -resultList: List<T>
+        +getResultCount()
+        +setResultCount()
+        +getResultList()
+        +setResultList()
+        +getLimit()
+        +getOffset()
+    }
+
+    class PaginatedLists {
+        +{static} create()
+        +{static} executeQuery()
+        +{static} executePaginatedQuery()
+    }
+
+    class SortCriteria {
+        -column: int
+        -asc: boolean
+        -sortQuery: String
+        +getColumn()
+        +isAsc()
+        +getSortQuery()
+    }
+
+    PaginatedLists --> PaginatedList
+    PaginatedLists --> SortCriteria
+}
+
+package "com.sismics.reader.core.util.sanitizer" {
+    class ArticleSanitizer {
+        -log: Logger
+        +sanitize(baseUri: String, html: String)
+    }
+
+    class TextSanitizer {
+        -{static} policy: PolicyFactory
+        -{static} TAG_PATTERN: Pattern
+        +{static} sanitize(html: String)
+    }
+
+    ArticleSanitizer --> TextSanitizer
+}
+
+' Class relationships
+FeedService --|> AbstractScheduledService
+IndexingService --|> AbstractScheduledService
+IndexingService ..> LuceneUtil
+FeedService ..> TransactionUtil
+PaginatedLists ..> PaginatedList
+ArticleSanitizer ..> TextSanitizer
+LuceneUtil ..> LuceneRunnable
+
+' Package dependencies
+"com.sismics.reader.core.service" ..> "com.sismics.reader.core.util"
+"com.sismics.reader.core.service" ..> "com.sismics.reader.core.util.http"
+"com.sismics.reader.core.service" ..> "com.sismics.reader.core.util.jpa"
+"com.sismics.reader.core.service" ..> "com.sismics.reader.core.util.sanitizer"
+"com.sismics.reader.core.util.sanitizer" ..> "com.sismics.reader.core.util"
+"com.sismics.reader.core.util.http" ..> "com.sismics.reader.core.util"
+"com.sismics.reader.core.util.jpa" ..> "com.sismics.reader.core.util"
+
+
+
+package com.sismics.reader.core.dao.file.html{
+
+    ' FaviconDownloader.java
+    class FaviconDownloader {
+        - {static} log: Logger
+        + FAVICON_MIME_TYPE_MAP: ImmutableMap<String, String>
+        + downloadFaviconFromPage(pageUrl: String, directory: String, fileName: String): String
+        + getFaviconUrl(pageUrl: String, fileName: String): String
+        + downloadFavicon(faviconUrl: String, directory: String, fileName: String): String
+    }
+
+    ' FaviconDownloader ..> FaviconExtractor : uses
+    FaviconDownloader ..> com.sismics.reader.core.util.http.ReaderHttpClient : uses
+    FaviconDownloader ..> com.sismics.util.mime.MimeTypeUtil : uses
+    
+    
+    ' FaviconExtractor.java
+    class FaviconExtractor{
+        - {static} log: Logger
+        - url: URL
+        - favicon: String
+        + FaviconExtractor(url: String)
+        + readPage(is: InputStream): void
+        + startElement(url: Sting, localName: String, qName: String, attributes: Attributes): void
+        + getFavicon(): String
+    }
+
+    ' FaviconExtractor --|> DefaultHandler
+    ' FaviconExtractor ..> SAXParserImpl : uses
+    ' FaviconExtractor ..> Attributes : uses
+
+
+    ' RssExtractor.java
+    class RssExtractor{
+        - {static} log: Logger
+        - url: URL
+        - feedList: List<String>
+        + RssExtractor(url: String)
+        - readPage(is: InputStream): void
+        + startElement(uri: String, localName: String, attributes: Attributes): void
+        + getFeedList(): List<String>
+    }
+
+    RssExtractor ..> com.sismics.util.UrlUtil : uses
+    ' RssExtractor ..> Attributes : uses
+    ' RssExtractor ..> SAXException : uses
+    ' RssExtractor --|> DefaultHandler 
+
+
+    ' FeedChooserStratergy.java
+    class FeedChooserStratergy{
+        + guess(feedList: List<String>): String
+    }
+    ' FeedChooserStrategy ..> "uses" List
+
+}
+
+package com.sismics.reader.core.dao.jpa.criteria{
+    ' ArticleCriteria.java
+    class ArticleCriteria{
+        - id: String
+        - guidIn: List<String>
+        - title: String
+        - url: String
+        - publicationDateMin: Date
+        - feedId: String
+        + getId(): String
+        + setId(id: String): ArticleCriteria
+        + getUrl(): String
+        + setUrl(url: String): ArticleCriteria
+        + getPublicationDateMin(): Date
+        + setPublicationDateMin(publicationDateMin: Date): ArticleCriteria
+        + getFeedId(): String
+        + setFeedId(feedId: String): ArticleCriteria
+    }
+
+    ' FeedCriteria.java
+    class FeedCriteria{
+        - feedUrl: String
+        - withUserSubscription: boolean
+        + getFeedUrl(): String
+        + setFeedUrl(feedUrl: String): FeedCriteria
+        + isWithUserSubscription(): boolean
+        + setWithUserSubscription(withUserSubscription: boolean): FeedCriteria
+    }
+
+    'FeedSubscriptionCriteria.java
+    class FeedSubscriptionCriteria{
+        - id: String
+        - userId: String
+        - feedId: String
+        - categoryId: String
+        - feedUrl: String
+        - unread: boolean
+        + getId(): String
+        + setId(id: String): FeedSubscriptionCriteria
+        + getUserId(): String
+        + setUserId(userId: String): FeedSubscriptionCriteria
+        + getFeedId(): String
+        + setFeedId(feedId: String): FeedSubscriptionCriteria
+        + getCategoryId: String
+        + setCategoryId(categoryId: String): FeedSubscriptionCriteria
+        + getFeedUrl(): String
+        + setFeedUrl(feedUrl: String): FeedSubscriptionCriteria
+        + isUnread(): boolean
+        + setUnread(unread: boolean): FeedSubscriptionCriteria
+    }
+
+    ' JobCriteria.java
+    class JobCriteria{
+        - userId: String
+        + getUserId(): String
+        + setUserId(userId: String): JobCriteria
+    }
+
+    ' JobEventCriteria.java
+    class JobEventCriteria{
+        - jobId: String
+        + getJobId(): String
+        + setJobId(jobId: String): JobEventCriteria
+    }
+
+
+    'UserArticleCriteria.java
+
+    class UserArticleCriteria {
+        - userId: String
+        - feedId: String
+        - visible: boolean
+        - subscribed: boolean
+        - feedSubscriptionId: String
+        - categoryId: String
+        - unread: boolean
+        - starred: boolean
+        - articleId: String
+        - articleIdIn: List<String>
+        - userArticleId: String
+        - articlePublicationDateMax: Date
+        - userArticleStarredDateMax: Date
+        - articleIdMax: String
+        - userArticleIdMax: String
+        - fetchAllFeedSubscription: boolean
+
+        + getUserId(): String
+        + setUserId(userId: String): UserArticleCriteria
+        + getFeedId(): String
+        + setFeedId(feedId: String): UserArticleCriteria
+        + isVisible(): boolean
+        + setVisible(visible: boolean): UserArticleCriteria
+        + isSubscribed(): boolean
+        + setSubscribed(subscribed: boolean): UserArticleCriteria
+        + getFeedSubscriptionId(): String
+        + setFeedSubscriptionId(feedSubscriptionId: String): UserArticleCriteria
+
+        + isUnread(): boolean
+        + setUnread(unread: boolean): UserArticleCriteria
+        + getCategoryId(): String
+        + setCategoryId(categoryId: String): UserArticleCriteria
+        + isStarred(): boolean
+        + setStarred(starred: boolean): UserArticleCriteria
+        + getArticleId(): String
+        + setArticleId(articleId: String): UserArticleCriteria
+        + getArticleIdIn(): List<String>
+        + setArticleIdIn(articleIdIn: List<String>): UserArticleCriteria
+        + getUserArticleId(): String
+        + setUserArticleId(userArticleId: String): UserArticleCriteria
+        + getArticlePublicationDateMax(): Date
+        + setArticlePublicationDateMax(date: Date): UserArticleCriteria
+        + getUserArticleStarredDateMax(): Date
+        + setUserArticleStarredDateMax(date: Date): UserArticleCriteria
+        + getArticleIdMax(): String
+        + setArticleIdMax(articleIdMax: String): UserArticleCriteria
+        + getUserArticleIdMax(): String
+        + setUserArticleIdMax(userArticleIdMax: String): UserArticleCriteria
+        + isFetchAllFeedSubscription(): boolean
+        + setFetchAllFeedSubscription(fetch: boolean): UserArticleCriteria
+    }
+
+    ' UserCriteria.java
+    class UserCriteria{
+        ' its empty
+    }
+
+
+
+}
+
+package com.sismics.reader.core.dao.jpa.mapper{
+
+    ' ArticleMapper.java
+    class ArticleMapper extends ResultMapper {
+        + map(o: Object): ArticleDto
+    }
+    ArticleMapper --|>com.sismics.reader.core.dao.jpa.dto.ArticleDto
+    ArticleMapper --|>com.sismics.util.jpa.ResultMapper
+
+    ' FeedManager.java
+    class FeedManager extends ResultMapper{
+        + map(o: Object): FeedDto
+    }
+    FeedManager --|> com.sismics.reader.core.dao.jpa.dto.FeedDto
+    FeedManager --|> com.sismics.util.jpa.ResultMapper
+
+    ' FeedSubscriptionMapper.java
+    class FeedSubscriptionMapper extends ResultMapper{
+        + map(o: Object): FeedSubscriptionDto
+    }
+    FeedSubscriptionMapper --|> com.sismics.reader.core.dao.jpa.dto.FeedSubscriptionDto
+    FeedSubscriptionMapper --|> com.sismics.util.jpa.ResultMapper
+
+
+    ' JobEventMapper.java
+    class JobEventMapper extends ResultMapper{
+        + map(o: Object): JobEventDto
+    }
+    JobEventMapper --|> com.sismics.reader.core.dao.jpa.dto.JobEventDto
+    JobEventMapper --|> com.sismics.util.jpa.ResultMapper
+
+
+    ' JobMapper.java
+    class JobMapper extends ResultMapper{
+        + map(o: Object): JobDto
+    }
+    JobMapper --|> com.sismics.reader.core.dao.jpa.dto.JobDto
+    JobMapper --|> com.sismics.util.jpa.ResultMapper
+
+
+    ' UserArticleMapper.java
+    class UserArticleMapper extends ResultMapper{
+        +map(o: Object): UserArticleDto
+    }
+    UserArticleMapper --|> com.sismics.reader.core.dao.jpa.dto.UserArticleDto
+    UserArticleMapper --|> com.sismics.util.jpa.ResultMapper
+
+
+    ' UserMapper.java
+    class UserMapper extends ResultMapper {
+        + map(o: Object[]): UserDto
+
+    }
+    UserMapper --|> com.sismics.util.jpa.ResultMapper
+    UserMapper --|> com.sismics.reader.core.dao.jpa.dto.UserDto
+}
+
+package com.sismics.reader.core.dao.jpa{
+
+    ' ArticleDao.java
+    class ArticleDao extends BaseDao{
+        # getQueryParam(criteria: ArticleCriteria, FilterCriteria: FilterCriteria): QueryParam
+        + create(article: Article): String
+        + update(article: Article): Article
+        + findAll(): List<Article>
+        + delete(id: String): void
+    }
+
+    ArticleDao --|> com.sismics.reader.core.dao.jpa.criteria.ArticleCriteria
+    ArticleDao --|> com.sismics.reader.core.dao.jpa.dto.ArticleDto
+    ArticleDao --|> com.sismics.reader.core.dao.jpa.mapper.ArticleMapper
+    ArticleDao --|> com.sismics.reader.core.model.jpa.Article
+    ArticleDao --|> com.sismics.reader.core.util.jpa.SortCriteria
+    ArticleDao --|> com.sismics.util.context.ThreadLocalContext
+    ArticleDao --|> com.sismics.util.jpa.BaseDao
+    ArticleDao --|> com.sismics.util.jpa.DialectUtil
+    ArticleDao --|> com.sismics.util.jpa.QueryParam
+    ArticleDao --|> com.sismics.util.jpa.filter.FilterCriteria
+
+    ' AuthenticationTokenDao.java
+    class AuthenticationTokenDao{
+        + get(id: String): AuthenticationToken
+        + create(authenticationToken: AuthenticationToken): String
+        + delete(authenticationTokenId: String): void 
+        + deleteOldSessionToken(userId: String): void
+        + updateLastConnectionDate(id: String): void
+    }
+    AuthenticationTokenDao ..> com.sismics.reader.core.model.jpa.AuthenticationToken : uses
+    AuthenticationTokenDao ..> com.sismics.util.context.ThreadLocalContext : uses
+
+    ' CategoryDao.java
+    class CategoryDao{
+        + create(category: Category): String
+        + update(category: Category): String
+        ' suppressWarning
+        + reorder(category: Category, order: int): void
+        + delete(id: String):void
+        + getRootCategory(userId: String): Category
+        + getCategory(id: String, userId: String): Category
+        + getCategoryCount(parentId: String, userId: String): int
+        ' suppressWarning
+        + findAllCategory(userId: String): List<Category>
+        ' suppressWarning
+        + findSubCategory(parentId: String, userId: String): List<Category>   
+    }
+    CategoryDao --|> com.sismics.reader.core.model.jpa.Category
+    CategoryDao --|> com.sismics.util.context.ThreadLocalContext
+
+    ' ConfigDao.java
+    class ConfigDao{
+        + getById(id: ConfigType): Config
+    }
+    ConfigDao --|> com.sismics.reader.core.model.jpa.Config
+    ConfigDao --|> com.sismics.reader.core.constant.ConfigType
+    ConfigDao --|> com.sismics.util.context.ThreadLocalContext
+
+    class FeedDao extends BaseDao{
+        # getQueryParam(criteria: FeedCriteria, filterCriteria: FilterCriteria): QueryParam
+        + create(feed: Feed): String
+        + delete(id: String): void
+        + getByRssUrl(rssUrl: String): Feed
+        + update(feed: Feed): Feed
+    }
+
+    FeedDao --|> com.sismics.reader.core.dao.jpa.criteria.FeedCriteria
+    FeedDao --|> com.sismics.reader.core.dao.jpa.dto.FeedDto
+    FeedDao --|> com.sismics.reader.core.dao.jpa.mapper.FeedMapper
+    FeedDao --|> com.sismics.reader.core.model.jpa.Feed
+    FeedDao --|> com.sismics.reader.core.util.jpa.SortCriteria
+    FeedDao --|> com.sismics.util.context.ThreadLocalContext
+    FeedDao --|> com.sismics.util.jpa.BaseDao
+    FeedDao --|> com.sismics.util.jpa.QueryParam
+    FeedDao --|> com.sismics.util.jpa.filter.FilterCriteria
+
+}
+
+
+
+package "com.sismics.reader.core.constant" {
+    ' configtype.java
+  enum ConfigType {
+    LUCENE_DIRECTORY_STORAGE
+  }
+
+class Constants {
+    ' constants.java how to represent static and final in class diagrams
+    + String DEFAULT_LOCALE_ID = "en"
+    + String DEFAULT_TIMEZONE_ID = "Europe/London"
+    + String DEFAULT_THEME_ID = "default.less"
+    + String DEFAULT_ADMIN_PASSWORD = "$2a$05$6Ny3TjrW3aVAL1or2SlcR.fhuDgPKp5jp.P9fBXwVNePgeLqb4i3C"
+    + String LUCENE_DIRECTORY_STORAGE_RAM = "RAM"
+    + String LUCENE_DIRECTORY_STORAGE_FILE = "FILE"
+    + String DEFAULT_USER_ROLE = "user"
+    + String JOB_IMPORT = "import"
+    + String JOB_EVENT_FEED_COUNT = "import.feed_count"
+    + String JOB_EVENT_STARRED_ARTICLED_COUNT = "import.starred_article_count"
+    + String JOB_EVENT_FEED_IMPORT_SUCCESS = "import.feed_import_success"
+    + String JOB_EVENT_FEED_IMPORT_FAILURE = "import.feed_import_failure"
+    + String JOB_EVENT_STARRED_ARTICLE_IMPORT_SUCCESS = "import.starred_article_import_success"
+    + String JOB_EVENT_STARRED_ARTICLE_IMPORT_FAILURE = "import.starred_article_import_failure"
+}
+
+}
+package com.sismics.reader.core.dao.file.json {
+    class StarredArticleImportedEvent {
+        - Feed: feed
+        - Article: article
+
+        + getFeed() : Feed
+        + setFeed(Feed feed) : void
+        + getArticle() : Article
+        + setArticle(Article article) : void
+        + toString() : String
+    }
+    ' StarredArticleImportedEvent.java
+'     ' // Representing relationships with Feed and Article classes
+'     class Feed
+'     class Article
+
+'     ' // Usage relationships
+'     StarredArticleImportedEvent --> Feed : feed
+'     StarredArticleImportedEvent --> Article : article
+}
+package com.sismics.reader.core.dao.file.json {
+    interface StarredArticleImportedListener {
+        + onStarredArticleImported(StarredArticleImportedEvent event) : void
+    }
+
+    ' starredArticleImportedListener.java
+
+    ' class StarredArticleImportedEvent
+
+    ' // Association to represent the use of StarredArticleImportedEvent
+    ' StarredArticleImportedListener --> StarredArticleImportedEvent : event
+}
+package com.sismics.reader.core.dao.file.json {
+    class StarredReader {
+        - {static}  log : Logger
+        - StarredArticleImportedListener : starredArticleImportedListener
+
+        + read(InputStream is) : void
+        + setStarredArticleListener(StarredArticleImportedListener starredArticleListener) : void
+    }
+    ' starredReader.java
+    ' class Feed {
+    '     + void setRssUrl(String rssUrl)
+    '     + void setTitle(String title)
+    '     + void setUrl(String url)
+    ' }
+
+    ' class Article {
+    '     + void setTitle(String title)
+    '     + void setPublicationDate(Date publicationDate)
+    '     + void setUrl(String url)
+    '     + void setDescription(String description)
+    ' }
+
+
+    ' class JsonValidationUtil {
+    '     + static void validateJsonString(JsonNode node, String field, boolean required)
+    '     + static void validateJsonArray(JsonNode node, String field, boolean required)
+    '     + static void validateJsonObject(JsonNode node, String field, boolean required)
+    '     + static void validateJsonNumber(JsonNode node, String field, boolean required)
+    ' }
+
+    ' class Logger {
+    '     + static Logger getLogger(Class clazz)
+    '     + boolean isInfoEnabled()
+    '     + void info(String message)
+    ' }
+
+    ' class ObjectMapper {
+    '     + JsonNode readTree(InputStream is)
+    ' }
+
+    ' // Associations
+    ' StarredReader --> "1" StarredArticleImportedListener
+    ' StarredReader --> "1" Logger : log
+    ' StarredReader --> "1" ObjectMapper
+    ' StarredReader --> "*" JsonNode
+    ' StarredReader --> "1" JsonValidationUtil
+    ' StarredArticleImportedEvent --> Feed
+    ' StarredArticleImportedEvent --> Article
+    ' StarredArticleImportedListener --> StarredArticleImportedEvent
+}
+
+package com.sismics.reader.core.dao.file.opml {
+    class OpmlFlattener {
+        + {static} flatten(List<Outline> outlineList) : Map<String, List<Outline>> 
+        - {static} flatten(List<Outline> outlineTree, Map<String, List<Outline>> outlineMap, String prefix) : void
+        - {static} getPrefix(Outline outline, String prefix) : String
+    }
+    ' opmlFlattener.java
+
+    ' class Outline {
+    '     + String getXmlUrl()
+    '     + String getText()
+    '     + String getTitle()
+    '     + List<Outline> getOutlineList()
+    ' }
+
+    ' class StringUtils {
+    '     + static boolean isBlank(String str)
+    '     + static boolean isNotBlank(String str)
+    ' }
+
+    ' ' // Associations
+    ' OpmlFlattener --> Outline : uses
+    ' OpmlFlattener --> StringUtils : uses
+}
+
+
+package com.sismics.reader.core.dao.file.opml {
+    class DefaultHandler{}
+    class OpmlReader extends DefaultHandler {
+        - {static}  log : Logger
+        - content : String 
+        - rootOutline : Outline
+        - currentOutline : Outline 
+        ' - Element { UNKNOWN, OPML, BODY, OUTLINE } : enum 
+        - currentElement : Element
+        - elementStack : Stack<Element>
+        - outlineStack : Stack<Outline> 
+
+        + OpmlReader() : void 
+        + read(InputStream is) : void
+        + getOutlineList() : List<Outline>
+        + startElement(String uri, String localName, String qName, Attributes attributes) : void
+        + endElement(String uri, String localName, String qName) : void
+        + characters(char[] ch, int start, int length) : void
+        - pushElement(Element newElement) : void
+        - popElement() : void
+    }
+
+    class Outline {
+        + void setText(String text)
+        + void setTitle(String title)
+        + void setXmlUrl(String xmlUrl)
+        + void setHtmlUrl(String htmlUrl)
+        + void setType(String type)
+        + List<Outline> getOutlineList()
+    }
+    ' OpmlReader.java
+    ' class StringUtils {
+    '     + static boolean isBlank(String str)
+    '     + static String trim(String str)
+    ' }
+
+    ' class Logger {
+    '     + static Logger getLogger(Class<?> clazz)
+    '     + boolean isTraceEnabled()
+    '     + void trace(String message)
+    '     + void warn(String message)
+    ' }
+
+    ' class LoggerFactory {
+    '     + static Logger getLogger(Class<?> clazz)
+    ' }
+
+    ' class SAXParser {
+    '     + void parse(InputStream is, DefaultHandler handler)
+    ' }
+
+    ' class SAXParserFactory {
+    '     + static SAXParserFactory newInstance()
+    '     + void setNamespaceAware(boolean awareness)
+    '     + void setFeature(String name, boolean value)
+    '     + SAXParser newSAXParser() throws Exception
+    ' }
+
+    ' interface Attributes {
+    '     + String getValue(String qName)
+    ' }
+
+    ' interface DefaultHandler {
+    '     + void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException
+    '     + void endElement(String uri, String localName, String qName) throws SAXException
+    '     + void characters(char[] ch, int start, int length) throws SAXException
+    ' }
+
+    ' // Associations
+    ' OpmlReader --> Outline : uses
+    ' OpmlReader --> StringUtils : uses
+    ' OpmlReader --> Logger : uses logging
+    ' OpmlReader --> SAXParser : uses
+    ' OpmlReader --> SAXParserFactory : uses
+    ' OpmlReader --> Attributes : interacts
+    ' Outline --> Outline : manages sub-outlines
+    ' OpmlReader --|> DefaultHandler : extends
+}
+
+
+package com.sismics.reader.core.dao.file.opml {
+    class Outline {
+        - text : String 
+        - title : String
+        - type : String
+        - xmlUrl : String
+        - htmlUrl : String
+        - outlineList : List<Outline>
+
+        + Outline() : void
+        + getText() : String
+        + setText(String text) : void
+        + getTitle() : String
+        + setTitle(String title) : void
+        + getType() : String
+        + setType(String type) : void
+        + getXmlUrl() : String
+        + setXmlUrl(String xmlUrl) : void
+        + getHtmlUrl() : String
+        + setHtmlUrl(String htmlUrl) : void
+        + getOutlineList() : List<Outline>
+    }
+}
+package com.sismics.reader.core.dao.file.rss {
+    class AtomArticleCommentUrlGuesserStrategy {
+        + guess(List<AtomLink> atomLinkList) : String
+    }
+    ' AtomArticleCommentUrlGuesserStrategy.java
+
+    ' AtomArticleCommentUrlGuesserStrategy --> "uses" AtomLink
+    class AtomArticleUrlGuesserStrategy {
+        + guess(List<AtomLink> atomLinkList) : String
+    }
+    ' AtomArticleUrlGuesserStrategy.java
+    ' AtomLink.java
+    class AtomLink {
+        - rel : String
+        - type : String
+        - href : String
+
+        + AtomLink(String rel, String type, String href)
+        + getRel() : String
+        + setRel(String rel) : void
+        + getHref() : String
+        + setHref(String href) : void
+        + getType() : String
+        + setType(String type) : void
+    }
+    ' AtomArticleUrlGuesserStrategy --> "uses" AtomLink
+    class AtomUrlGuesserStrategy {
+        + guessSiteUrl(List<AtomLink> atomLinkList) : String
+        + guessFeedUrl(List<AtomLink> atomLinkList) : String
+    }
+    ' AtomUrlGuesserStrategy.java
+    ' GuidFixer.java
+    class GuidFixer {
+        + {static} fixGuid(Article article) : void
+    }
+
+    ' class Article {
+    '     - String guid
+    '     - String url
+    '     - String title
+    '     - String description
+
+    '     + String getGuid()
+    '     + void setGuid(String guid)
+    '     + String getUrl()
+    '     + String getTitle()
+    '     + String getDescription()
+    ' }
+
+    ' class StringUtils {
+    '     + static boolean isBlank(String str)
+    '     + static boolean isNotBlank(String str)
+    ' }
+
+    ' class Hashing {
+    '     + static Hasher sha1()
+    ' }
+
+    ' class Hasher {
+    '     + Hasher putString(String str)
+    '     + String hash()
+    ' }
+
+    ' GuidFixer ..> Article : uses
+    ' GuidFixer ..> StringUtils : uses
+    ' GuidFixer ..> Hashing : uses
+    ' Hashing ..> Hasher : creates
+
+class RssReader  extends DefaultHandler {
+    - {static} log : Logger
+    - {static} DF_RSS : DateTimeFormatter
+    - {static} DF_ATOM : DateTimeFormatter
+    - {static} DF_DC : DateTimeFormatter
+    - content : String
+    - feed : Feed
+    - article : Article
+    - articleList : List<Article>
+    - atomLinkList : List<AtomLink>
+    - atomArticleLinkList : List<AtomLink>
+    - fatalErrorCount : int
+    - {static}  URI_XML : String
+    - {static}  URI_ATOM :  String
+    - {static}  URI_RDF : String
+    - {static}  URI_SLASH : String
+    - {static}  URI_DC : String
+    - {static}  URI_CONTENT : String
+    - {static}  URI_THREAD : String
+    - feedType : FeedType
+    - currentElement : Element
+    - elementStack : Stack<Element>
+    - {static} FATAL_ERROR_MAX : int
+    ' - enum FeedType { RSS, ATOM, RDF }
+    ' - enum Element {
+    '     UNKNOWN, RSS, RSS_CHANNEL, RSS_TITLE, RSS_LINK,
+    '     RSS_DESCRIPTION, RSS_LANGUAGE, ITEM, ITEM_TITLE,
+    '     ITEM_GUID, ITEM_LINK, ITEM_COMMENTS, ITEM_SLASH_COMMENTS,
+    '     ITEM_DESCRIPTION, ITEM_DC_CREATOR, ITEM_DC_DATE,
+    '     ITEM_PUB_DATE, ITEM_CONTENT_ENCODED, ITEM_ENCLOSURE,
+    '     FEED, ATOM_TITLE, ATOM_SUBTITLE, ATOM_LINK,
+    '     ATOM_ID, ATOM_UPDATED, ENTRY, ENTRY_TITLE,
+    '     ENTRY_LINK, ENTRY_UPDATED, ENTRY_ID, ENTRY_SUMMARY,
+    '     ENTRY_CONTENT, ENTRY_AUTHOR, AUTHOR_NAME, RDF
+    ' }
+
+    + RssReader()
+    'override methods
+    + readRssFeed(InputStream is): void
+    + startElement(String uri, String localName, String qName, Attributes attributes): void
+}
+
+' class Feed {
+'     - String url
+'     - String baseUri
+'     - String language
+'     + setUrl(String url): void
+'     + setBaseUri(String baseUri): void
+'     + setLanguage(String language): void
+' }
+
+' class Article {
+'     - String guid
+'     - String enclosureUrl
+'     - Integer enclosureLength
+'     - String enclosureType
+'     + setGuid(String guid): void
+'     + setEnclosureUrl(String enclosureUrl): void
+'     + setEnclosureLength(Integer enclosureLength): void
+'     + setEnclosureType(String enclosureType): void
+' }
+
+' RssReader *-- Feed
+' RssReader *-- Article
+' RssReader *-- AtomLink
+' RssReader *-- Stack
+' RssReader *-- List
+'XmlReader.java
+class XmlReader {
+    - {static} HEADER_SIZE : int
+    - internalInputStreamReader : InputStreamReader
+    + XmlReader(InputStream in, String defaultEnc) 
+    + close(): void
+    + read(char[] cbuf, int off, int len): int
+}
+
+class Reader {
+    + close(): void
+    + read(char[] cbuf, int off, int len): int
+}
+
+' class InputStreamReader {
+'     + InputStreamReader(InputStream in, String charsetName) <<constructor>>
+'     + close(): void
+'     + read(char[] cbuf, int off, int len): int
+' }
+
+' class InputStream {
+' }
+
+' class PushbackInputStream {
+'     + PushbackInputStream(InputStream in, int size) <<constructor>>
+'     + unread(byte[] buf, int off, int len): void
+' }
+
+' class ByteStreams {
+'     + read(InputStream in, byte[] b, int off, int len): int
+' }
+
+' class Charset {
+'     + forName(String charsetName): Charset
+' }
+
+' class Pattern {
+'     + compile(String regex): Pattern
+'     + matcher(CharSequence input): Matcher
+' }
+
+' class Matcher {
+'     + find(): boolean
+'     + group(int group): String
+' }
+
+XmlReader --|> Reader
+' XmlReader *-- InputStreamReader
+' XmlReader *-- PushbackInputStream
+' XmlReader ..> ByteStreams : uses
+' XmlReader ..> Charset : uses
+' XmlReader ..> Pattern : uses
+' Pattern ..> Matcher : creates
+
+}
+package "com.sismics.reader.core.dao.jpa.dto"{
+class ArticleDto {
+    - id : String
+    - url : String
+    - guid : String
+    - title : String
+    - creator : String
+    - description : String
+    - commentUrl : String
+    - commentCount : int
+    - enclosureUrl : String
+    - nclosureCount : int
+    - enclosureType : String
+    - publicationDate : Date
+    - createDate : Date
+    - feedId : String
+
+    + getId() : String
+    + etId(String id) : void
+    + getUrl() : String
+    + setUrl(String url) : void
+    + getGuid() : String
+    + setGuid(String guid) : void
+    + getTitle() : String
+    + setTitle(String title) : void
+    + getCreator() : String
+    + setCreator(String creator) : void
+    + getDescription() : String
+    + setDescription(String description) : void
+    + getCommentUrl() : String
+    + setCommentUrl(String commentUrl) : void
+    + getCommentCount() : int
+    + setCommentCount(Integer commentCount) : void
+    + getEnclosureUrl() : String
+    + setEnclosureUrl(String enclosureUrl) : void
+    + getEnclosureCount() : int
+    + setEnclosureCount(Integer enclosureCount) : void
+    + setEnclosureType(String enclosureType) : void
+    + getPublicationDate() : Date
+    + setPublicationDate(Date publicationDate) : void
+    + getCreateDate() : Date
+    + setCreateDate(Date createDate) : void
+    + getFeedId() : String
+    + setFeedId(String feedId) : void
+}
+class FeedDto {
+    - String id
+    - String rssUrl
+
+    + String getId()
+    + void setId(String id)
+    + String getRssUrl()
+    + void setRssUrl(String rssUrl)
+}
+class FeedSubscriptionDto {
+    - id : String
+    - feedSubscriptionTitle : String
+    - feedTitle : String
+    - userId : String
+    - feedId : String
+    - feedRssUrl : String
+    - feedUrl : String
+    - feedDescription : String
+    - unreadUserArticleCount : int
+    - synchronizationFailCount : int
+    - createDate : Date
+    - categoryId : String
+    - categoryParentId : String
+    - categoryName : String
+    - categoryFolded : boolean
+
+    + getId() : String
+    + setId(String id) : void
+    + getFeedSubscriptionTitle() : String 
+    + setFeedSubscriptionTitle(String feedSubscriptionTitle) : void 
+    + getFeedTitle() : String 
+    + setFeedTitle(String feedTitle) : void 
+    + getUserId() : String
+    + setUserId(String userId) : void 
+    + getFeedId() : String
+    + setFeedId(String feedId) : void
+    + getFeedRssUrl() : String
+    + setFeedRssUrl(String feedRssUrl) : void
+    + getFeedUrl() : String 
+    + setFeedUrl(String feedUrl) : void 
+    + getFeedDescription() : String 
+    + setFeedDescription(String feedDescription) : void 
+    + getUnreadUserArticleCount() : int
+    + setUnreadUserArticleCount(Integer unreadUserArticleCount) : void
+    + getSynchronizationFailCount() : int
+    + setSynchronizationFailCount(Integer synchronizationFailCount) : void
+    + getCreateDate() : Date
+    + setCreateDate(Date createDate) : void
+    + getCategoryId() : String
+    + setCategoryId(String categoryId) : void
+    + getCategoryParentId() : String
+    + setCategoryParentId(String categoryParentId) : void
+    + getCategoryName() : String
+    + setCategoryName(String categoryName) : void
+    + isCategoryFolded() : boolean
+    + setCategoryFolded(boolean categoryFolded) : void
+}
+class JobDto {
+    - String id
+    - String name
+    - String userId
+    - Long createTimestamp
+    - Long startTimestamp
+    - Long endTimestamp
+
+    + String getId()
+    + void setId(String id)
+    + String getName()
+    + void setName(String name)
+    + String getUserId()
+    + void setUserId(String userId)
+    + Long getCreateTimestamp()
+    + void setCreateTimestamp(Long createTimestamp)
+    + Long getStartTimestamp()
+    + void setStartTimestamp(Long startTimestamp)
+    + Long getEndTimestamp()
+    + void setEndTimestamp(Long endTimestamp)
+}
+class JobEventDto {
+    - id : String
+    - name : String
+    - value : String
+
+    + getId(): String
+    + setId(String id): void
+    + getName(): String
+    + setName(String name): void
+    + getValue(): String
+    + setValue(String value): void
+}
+class UserArticleDto {
+    - id : String
+    - readTimestamp : Long
+    - starTimestamp : Long
+    - feedTitle : String
+    - feedSubscriptionId : String
+    - feedSubscriptionTitle : String
+    - articleId : String
+    - articleUrl : String
+    - articleGuid : String
+    - articleTitle : String
+    - articleCreator : String
+    - articleDescription : String
+    - articleCommentUrl : String
+    - articleCommentCount : Integer
+    - articleEnclosureUrl : String
+    - articleEnclosureLength : Integer
+    - articleEnclosureType : String
+    - articlePublicationTimestamp : Long
+
+    + getId(): String
+    + setId(String id): void
+    + getReadTimestamp(): Long
+    + setReadTimestamp(Long readTimestamp): void
+    + getStarTimestamp(): Long
+    + setStarTimestamp(Long starTimestamp): void
+    + getFeedTitle(): String
+    + setFeedTitle(String feedTitle): void
+    + getFeedSubscriptionId(): String
+    + setFeedSubscriptionId(String feedSubscriptionId): void
+    + getFeedSubscriptionTitle(): String
+    + setFeedSubscriptionTitle(String feedSubscriptionTitle): void
+    + getArticleId(): String
+    + setArticleId(String articleId): void
+    + getArticleUrl(): String
+    + setArticleUrl(String articleUrl): void
+    + getArticleGuid(): String
+    + setArticleGuid(String articleGuid): void
+    + getArticleTitle(): String
+    + setArticleTitle(String articleTitle): void
+    + getArticleCreator(): String
+    + setArticleCreator(String articleCreator): void
+    + getArticleDescription(): String
+    + setArticleDescription(String articleDescription): void
+    + getArticleCommentUrl(): String
+    + setArticleCommentUrl(String articleCommentUrl): void
+    + getArticleCommentCount(): Integer
+    + setArticleCommentCount(Integer articleCommentCount): void
+    + getArticleEnclosureUrl(): String
+    + setArticleEnclosureUrl(String articleEnclosureUrl): void
+    + getArticleEnclosureLength(): Integer
+    + setArticleEnclosureLength(Integer articleEnclosureLength): void
+    + getArticleEnclosureType(): String
+    + setArticleEnclosureType(String articleEnclosureType): void
+    + getArticlePublicationTimestamp(): Long
+    + setArticlePublicationTimestamp(Long articlePublicationTimestamp): void
+}
+}
+package "com.sismics.reader.core.dao.jpa.dto"{
+class UserDto {
+    - String id
+    - String localeId
+    - String username
+    - String email
+    - Long createTimestamp
+
+    + getId(): String
+    + setId(String id): void
+    + getLocaleId(): String
+    + setLocaleId(String localeId): void
+    + getUsername(): String
+    + setUsername(String username): void
+    + getEmail(): String
+    + setEmail(String email): void
+    + getCreateTimestamp(): Long
+    + setCreateTimestamp(Long createTimestamp): void
+}
+}
+package "com.sismics.reader.core.dao.lucene"{
+class ReaderStandardAnalyzer {
+    + {static} int DEFAULT_MAX_TOKEN_LENGTH = 255
+    - int maxTokenLength
+    + {static} CharArraySet STOP_WORDS_SET
+
+    + ReaderStandardAnalyzer(Version matchVersion, CharArraySet stopWords)
+    + ReaderStandardAnalyzer(Version matchVersion)
+    + ReaderStandardAnalyzer(Version matchVersion, Reader stopwords) throws IOException
+    + setMaxTokenLength(int length): void
+    + getMaxTokenLength(): int
+    + createComponents(String fieldName, Reader reader): TokenStreamComponents
+    + initReader(String fieldName, Reader reader): Reader
+}
+
+' class StopwordAnalyzerBase {
+'     + StopwordAnalyzerBase(Version matchVersion, CharArraySet stopWords)
+' }
+
+' class StandardTokenizer {
+'     + StandardTokenizer(Version matchVersion, Reader reader)
+'     + setMaxTokenLength(int length): void
+' }
+
+' class TokenStreamComponents {
+'     + TokenStreamComponents(StandardTokenizer src, TokenStream tok)
+' }
+
+' class StandardFilter {
+'     + StandardFilter(Version matchVersion, TokenStream tok)
+' }
+
+' class LowerCaseFilter {
+'     + LowerCaseFilter(Version matchVersion, TokenStream tok)
+' }
+
+' class StopFilter {
+'     + StopFilter(Version matchVersion, TokenStream tok, CharArraySet stopwords)
+' }
+
+' class HTMLStripCharFilter {
+'     + HTMLStripCharFilter(Reader reader)
+' }
+
+' ReaderStandardAnalyzer --|> StopwordAnalyzerBase
+' ReaderStandardAnalyzer o-- StandardTokenizer
+' ReaderStandardAnalyzer o-- TokenStreamComponents
+' ReaderStandardAnalyzer ..> StandardFilter
+' ReaderStandardAnalyzer ..> LowerCaseFilter
+' ReaderStandardAnalyzer ..> StopFilter
+' ReaderStandardAnalyzer ..> HTMLStripCharFilter
+
+class ArticleDao {
+    + rebuildIndex(List<Article> articleList): void
+    + create(List<Article> articleList): void
+    + update(List<Article> articleList): void
+    + delete(List<Article> articleList): void
+    + search(PaginatedList<UserArticleDto> paginatedList, String searchQuery): Map<String, Article>
+    - getDocumentFromArticle(Article article): Document
+}
+
+' class LuceneUtil {
+'     + handle(Consumer<IndexWriter> consumer): void
+' }
+
+' class AppContext {
+'     + getInstance(): AppContext
+'     + getIndexingService(): IndexingService
+' }
+
+' class IndexingService {
+'     + getDirectoryReader(): DirectoryReader
+' }
+
+' class Article {
+'     + getId(): String
+'     + getUrl(): String
+'     + getPublicationDate(): Date
+'     + getTitle(): String
+'     + getDescription(): String
+' }
+
+' class PaginatedList<UserArticleDto> {
+'     + getOffset(): int
+'     + getLimit(): int
+'     + setResultCount(int count): void
+' }
+
+' class UserArticleDto {}
+
+' class Document {}
+
+' class QueryParserUtil {
+'     + escape(String query): String
+' }
+
+' class StandardQueryParser {
+'     + StandardQueryParser(ReaderStandardAnalyzer analyzer)
+'     + setPhraseSlop(int slop): void
+'     + parse(String query, String field): Query
+' }
+
+' class BooleanQuery {
+'     + add(Query query, Occur occur): void
+' }
+
+' class GroupingSearch {
+'     + GroupingSearch(String groupField)
+'     + setGroupSort(Sort sort): void
+'     + setFillSortFields(boolean fillFields): void
+'     + setCachingInMB(int mb, boolean cache): void
+'     + setAllGroups(boolean allGroups): void
+'     + search(IndexSearcher searcher, Query query, int offset, int limit): TopGroups<BytesRef>
+' }
+
+' class TopGroups<BytesRef> {
+'     - GroupDocs<BytesRef>[] groups
+'     + int totalGroupCount
+' }
+
+' class PostingsHighlighter {
+'     + PostingsHighlighter(int maxLength, BreakIterator breakIterator, PassageScorer scorer, PassageFormatter formatter)
+'     + highlightFields(String[] fields, Query query, IndexSearcher searcher, TopDocs topDocs, int maxPassages): Map<String, String[]>
+' }
+
+' class PassageFormatter {
+'     + format(Passage[] passages, String content): String
+' }
+
+' class Passage {}
+
+' class IndexSearcher {}
+
+' class Term {
+'     + Term(String field, String text)
+' }
+
+' class Field {
+'     + Field(String name, String value, FieldType type)
+' }
+
+' class FieldType {
+'     + setIndexOptions(IndexOptions options): void
+' }
+
+' class IndexOptions {
+'     + DOCS_AND_FREQS_AND_POSITIONS_AND_OFFSETS
+' }
+
+' class TextField {
+'     + TYPE_STORED
+' }
+
+' class StringField {
+'     + StringField(String name, String value, Field.Store store)
+' }
+
+' class LongField {
+'     + LongField(String name, long value, Field.Store store)
+' }
+
+' ArticleDao ..> LuceneUtil
+' ArticleDao ..> AppContext
+' ArticleDao ..> Article
+' ArticleDao ..> PaginatedList
+' ArticleDao ..> StandardQueryParser
+' ArticleDao ..> BooleanQuery
+' ArticleDao ..> GroupingSearch
+' ArticleDao ..> PostingsHighlighter
+' ArticleDao ..> Term
+' ArticleDao ..> Field
+' ArticleDao ..> FieldType
+}
+
+package com.sismics.reader.core.dao.jpa {
+    class RoleBaseFunctionDao {
+        +findByRoleId(String roleId) : List<String> 
+    }
+
+    ' class ThreadLocalContext {
+    '     +EntityManager get()
+    ' }
+
+    ' RoleBaseFunctionDao --> ThreadLocalContext : uses
+    class UserDao {
+        #getQueryParam(UserCriteria criteria, FilterCriteria filterCriteria) : QueryParam 
+        +authenticate(String username, String password) : String
+        +create(User user) : User
+        +update(User user) : User 
+        +updatePassword(User user) : User 
+        +getById(String id) : User
+        +getActiveByUsername(String username) : User
+        +getActiveByPasswordResetKey(String passwordResetKey) : User
+        +delete(String username) : void
+        #hashPassword(String password) : String
+    }
+    UserDao --|> BaseDao : extends
+    ' class User {
+    '     -String id
+    '     -String username
+    '     -String email
+    '     -Date createDate
+    '     -String password
+    '     -String localeId
+    '     -String theme
+    '     -Boolean displayTitleWeb
+    '     -Boolean displayTitleMobile
+    '     -Boolean displayUnreadWeb
+    '     -Boolean displayUnreadMobile
+    '     -Boolean firstConnection
+    '     -Date deleteDate
+    '     -String passwordResetKey
+    ' }
+
+    ' class QueryParam {
+    '     -String query
+    '     -List<String> criteriaList
+    '     -Map<String, Object> parameterMap
+    '     -FilterCriteria filterCriteria
+    '     -UserMapper userMapper
+    ' }
+
+    ' class ThreadLocalContext {
+    '     +EntityManager get()
+    ' }
+
+
+
+    ' class BCrypt {
+    '     +String hashpw(String password, String salt)
+    '     +boolean checkpw(String candidate, String hashed)
+    '     +String gensalt()
+    ' }
+
+    ' Relationships
+    ' UserDao --> ThreadLocalContext : uses
+    ' Query --> User : queries
+    ' QueryParam --> UserCriteria : depends on
+    ' QueryParam --> FilterCriteria : depends on
+    ' QueryParam --> UserMapper : depends on
+    ' UserDao --> BCrypt : for password hashing
+    ' UserDao --> Constants : uses
+
+package com.sismics.reader.core.dao.jpa {
+    class JobDao {
+        + create(job: Job): String
+        + getActiveJob(id: String): Job
+        + delete(id: String): void
+        + update(job: Job): Job
+        # getQueryParam(criteria: JobCriteria, filterCriteria: FilterCriteria): QueryParam
+    }
+
+    JobDao --|> BaseDao : extends
+}
+
+
+
+' JobDao ..> JobCriteria : uses
+' JobDao ..> JobDto : uses
+' JobDao ..> JobMapper : uses
+' JobDao ..> ThreadLocalContext : uses
+' JobDao ..> EntityManager : uses
+' JobDao ..> QueryParam : creates
+' JobDao ..> SortCriteria : uses
+' JobDao ..> FilterCriteria : uses
+' JobDao ..> Job : manipulates
+' JobDao --|> BaseDao : extends
+package com.sismics.reader.core.dao.jpa {
+    class JobEventDao {
+        + create(jobEvent: JobEvent): String
+        + delete(id: String): void
+        # getQueryParam(criteria: JobEventCriteria, filterCriteria: FilterCriteria): QueryParam
+    }
+
+    JobEventDao --|> BaseDao : extends
+}
+
+
+' JobEventDao ..> JobEventCriteria : uses
+' JobEventDao ..> JobEventDto : uses
+' JobEventDao ..> JobEventMapper : uses
+' JobEventDao ..> ThreadLocalContext : uses
+' JobEventDao ..> EntityManager : uses
+' JobEventDao ..> QueryParam : creates
+' JobEventDao ..> SortCriteria : uses
+' JobEventDao ..> FilterCriteria : uses
+' JobEventDao ..> JobEvent : manipulates
+
+package com.sismics.reader.core.dao.jpa {
+    class FeedSynchronizationDao {
+        + create(feedSynchronization: FeedSynchronization): String
+        + deleteOldFeedSynchronization(feedId: String, minutes: int): void
+        + findByFeedId(feedId: String): List<FeedSynchronization>
+    }
+}
+
+' package com.sismics.reader.core.model.jpa {
+'     class FeedSynchronization {
+'         - id: String
+'         - feedId: String
+'         - createDate: Date
+'         + setId(id: String): void
+'         + setCreateDate(date: Date): void
+'     }
+' }
+
+' package com.sismics.util.context {
+'     class ThreadLocalContext {
+'         + get(): ThreadLocalContext
+'         + getEntityManager(): EntityManager
+'     }
+' }
+
+' package com.sismics.util.jpa {
+'     class DialectUtil {
+'         + getDateDiff(startDate: String, diffValue: String, unit: String): String
+'     }
+' }
+
+' FeedSynchronizationDao ..> FeedSynchronization : manipulates
+' FeedSynchronizationDao ..> ThreadLocalContext : uses
+' FeedSynchronizationDao ..> EntityManager : uses
+' FeedSynchronizationDao ..> DialectUtil : uses
+
+package com.sismics.reader.core.dao.jpa {
+    class LocaleDao {
+        + getById(id: String): Locale
+        + findAll(): List<Locale>
+    }
+}
+
+' package com.sismics.reader.core.model.jpa {
+'     class Locale {
+'         - id: String
+'         - name: String
+'         - description: String
+'         + getId(): String
+'         + setId(id: String): void
+'         + getName(): String
+'         + setName(name: String): void
+'         + getDescription(): String
+'         + setDescription(description: String): void
+'     }
+' }
+
+' package com.sismics.util.context {
+'     class ThreadLocalContext {
+'         + get(): ThreadLocalContext
+'         + getEntityManager(): EntityManager
+'     }
+' }
+
+' LocaleDao ..> Locale : manipulates
+' LocaleDao ..> ThreadLocalContext : uses
+' LocaleDao ..> EntityManager : uses
+
+class UserArticleDao {
+    + create(UserArticle userArticle) : String 
+    + update(UserArticle userArticle) : UserArticle 
+    + markAsRead(UserArticleCriteria criteria) : void
+    + delete(String id) : void
+    + getUserArticle(String id, String userId) : UserArticle 
+    + getQueryParam(UserArticleCriteria criteria, FilterCriteria filterCriteria) : QueryParam 
+}
+JobEventDao --|> BaseDao : extends
+' class UserArticle {
+'     + String id
+'     + Date createDate
+'     + Date readDate
+'     + Date starredDate
+'     + Date deleteDate
+' }
+
+' class UserArticleCriteria {
+'     + Boolean isVisible
+'     + Boolean isUnread
+'     + Boolean isStarred
+'     + String userId
+'     + String feedId
+'     + List<String> articleIdIn
+'     + String articleId
+'     + String userArticleId
+'     + Boolean isSubscribed
+'     + String categoryId
+'     + Date articlePublicationDateMax
+'     + Date userArticleStarredDateMax
+'     + String articleIdMax
+'     + String userArticleIdMax
+'     + Boolean isFetchAllFeedSubscription
+' }
+
+' class FilterCriteria {
+'     // Attributes for filter criteria
+' }
+
+' class QueryParam {
+'     + QueryParam(String query, List<String> criteriaList, Map<String, Object> parameterMap, SortCriteria sortCriteria, FilterCriteria filterCriteria, Object mapper)
+' }
+
+' class ThreadLocalContext {
+'     + static ThreadLocalContext get()
+'     + EntityManager getEntityManager()
+' }
+
+' class SortCriteria {
+'     + SortCriteria(String orderBy)
+' }
+
+' UserArticleDao --> UserArticle : uses
+' UserArticleDao --> UserArticleCriteria : uses
+' UserArticleDao --> FilterCriteria : uses
+' UserArticleDao --> QueryParam : uses
+' UserArticleDao --> ThreadLocalContext : accesses
+' UserArticleDao --> SortCriteria : uses
+
+
+
+}
+
+
+
+package com.sismics.reader.core.event
+{
+    class ArticleCreatedAsyncEvent
+    {
+        // import com.sismics.reader.core.model.jpa.Article
+
+        - articleList : List<Article>
+
+        + getArticleList() : List<Article>
+        + setArticleList() : void
+        + toString() : String <<override>>
+    }
+
+    class ArticleDeletedAsyncEvent
+    {
+        // import com.sismics.reader.core.model.jpa.Article
+
+        - articleList : List<Article>
+        + getArticleList() : List<Article>
+        + setArticleList() : void
+        + toString() : String <<override>>
+    }
+    class ArticleUpdatedAsyncEvent
+    {
+        // import com.sismics.reader.core.model.jpa.Article
+        - articleList : List<Article>
+        + getArticleList() : List<Article>
+        + setArticleList() : void
+        + toString() : String <<override>>
+    }
+    class FaviconUpdateRequestedEvent
+    {
+        // import com.sismics.reader.core.model.jpa.Feed
+
+        - feed : Feed
+        + toString() : String <<override>>
+        + getFeed() : Feed
+        + setFeed() : void
+    }
+    class PasswordChangedEvent
+    {
+        // import com.sismics.reader.core.model.jpa.User
+        - user : User
+        + getUser() : User
+        + setUser() : void
+    }
+    class RebuildIndexAsyncEvent
+    {
+        // import com.google.common.base.Objects
+        + toString() : String <<override>>
+    }
+    class SubscriptionImportedEvent
+    {
+        // import com.sismics.reader.core.model.jpa.User
+        - user : User
+        - importFile : File
+        + getUser() : User
+        + setUser() : void
+        + getImportFile() : File
+        + setImportFile() : void
+        + toString() : String <<override>>
+    }
+    class UserCreatedEvent
+    {
+        // import com.sismics.reader.core.model.jpa.User
+        - user : User
+        + getUser() : User
+        + setUser() : void
+        + toString() : String <<override>>
+    }
+}
+
+package com.sismics.reader.core.listener.async
+{
+    class ArticleCreatedAsyncListener
+    {
+        // import com.sismics.reader.core.dao.lucene.ArticleDao;
+        // import com.sismics.reader.core.event.ArticleCreatedAsyncEvent;
+        // import com.sismics.reader.core.model.jpa.Article;
+        - __log : Logger = LoggerFactory.getLogger(ArticleCreatedAsyncListener.class)
+        + onArticleCreated() : void
+    }
+    class ArticleDeletedAsyncListener
+    {
+        // import com.sismics.reader.core.dao.lucene.ArticleDao;
+        // import com.sismics.reader.core.event.ArticleDeletedAsyncEvent;
+        - __log : Logger = LoggerFactory.getLogger(ArticleDeletedAsyncListener.class)
+        + onArticleDeleted() : void
+
+    }
+    class ArticleUpdatedAsyncListener
+    {
+        // import com.sismics.reader.core.dao.lucene.ArticleDao;
+        // import com.sismics.reader.core.event.ArticleUpdatedAsyncEvent;
+        - __log : Logger = LoggerFactory.getLogger(ArticleUpdatedAsyncListener.class)
+        + onArticleUpdated() : void
+    }
+    class FaviconUpdateRequestedAsyncListener
+    {
+        // import com.sismics.reader.core.dao.file.html.FaviconDownloader;
+        // import com.sismics.reader.core.event.FaviconUpdateRequestedEvent;
+        // import com.sismics.reader.core.model.jpa.Feed;
+        // import com.sismics.reader.core.util.DirectoryUtil;
+        // import com.sismics.reader.core.util.TransactionUtil;
+
+        - __log : Logger = LoggerFactory.getLogger(FaviconUpdateRequestedAsyncListener.class)
+        + onFaviconUpdateRequested(): void 
+    }
+    class RebuildIndexAsyncListener
+    {
+        // import com.sismics.reader.core.dao.lucene.ArticleDao;
+        // import com.sismics.reader.core.event.RebuildIndexAsyncEvent;
+        // import com.sismics.reader.core.model.jpa.Article;
+        // import com.sismics.reader.core.util.TransactionUtil;
+        - __log : Logger = LoggerFactory.getLogger(RebuildIndexAsyncListener.class)
+        + onArticleCreated() : void 
+
+    }
+    class SubscriptionImportAsyncListener
+    {
+        // too many imports
+        - __log : Logger = LoggerFactory.getLogger(SubscriptionImportAsyncListener.class)
+        - __FILE_STARRED_JSON : String = starred.json
+        - __FILE_SUBSCRIPTIONS_XML : String = subscriptions.xml
+        + onSubscriptionImport() : void
+        - createJob() : Job
+        - getFeedCount() : long
+        - processImportFile() : void
+        - importOutline() : void
+        - importFeedFromStarred() : void
+    }
+}   
+
+package com.sismics.reader.core.listener.sync
+{
+    class DeadEventListener
+    {
+        - __log : Logger = LoggerFactory.getLogger(DeadEventListener.class)
+        + onDeadEvent() : void
+    }
+}
+
+
+
+package com.sismics.reader.agent.deployer
+{
+    class ReaderDeployer
+    {
+        - __READER_WAR : String = reader.war
+        - startTime : Date
+        - server : Server
+        - readerAgent : ReaderAgent
+        - exception : Exception
+        - serverStart : ServerState
+        + start() : void
+        + stop() : void
+        + getErrorMessage() : String
+        + getMemoryUsed() : int
+        + getURL() : String
+        + getDeploymentStatus() : DeploymentStatus
+        + lifeCycleStopping() : void <<override>>
+        + lifeCycleStopped() : void <<override>>
+        + lifeCycleStarting() : void <<override>>
+        + lifeCycleStarted() : void <<override>>
+        + lifeCycleFailure() : void <<override>>
+
+        + ReaderDeployer( readerAgent : ReaderAgent )
+    }
+
+    class DeploymentStatus
+    {
+        - serverState : ServerState
+        - startTime : Date
+        - url : String
+        - memoryUsed : int
+        - errorMessage : String
+        + getServerState : ServerState
+        + getStartTime : Date
+        + getUrl : String
+        + getMemoryUsed : int
+        + getErrorMessage : String
+
+        + DeploymentStatus( serverState : ServerState , startTime : Date , url : String , memoryUsed : int , errorMessage: String )
+    }
+    enum ServerState
+    {
+        +STOPPED
+        +STARTING
+        +STARTED
+        +STOPPING
+    }
+    ServerState ..* DeploymentStatus
+
+    interface DeploymentStatusListener
+    {
+        notifyDeploymentStatus : void 
+    }
+}
+
+package com.sismics.reader.agent.model
+{
+    class Setting
+    {
+        - __READER_AGENT_PROPERTIES_FILE : String = reader-agent.properties
+        + __DEFAULT_HOST : String = 0.0.0.0
+        + __DEFAULT_PORT : int = 4001
+        + __DEFAULT_CONTEXT_PATH : String = /
+        + __DEFAULT_AUTO_START : boolean = true
+        + __DEFAULT_SECURE : boolean = false
+        - host : String
+        - port : int
+        - contextPath : String
+        - autoStart : boolean
+        - keyStorePath : String
+        - keyStorePassword : String
+        - keyManagerPassword : String
+        + read() : void
+        + save() : void
+        + getHost() : String
+        + setHost() : void
+        + getPort() : int
+        + setPort() : void
+        + getContextPath() : String
+        + setContextPath() : void
+        + getReaderHome() : String
+        + setReaderHome() : void
+        + isAutoStart() : boolean
+        + setAutoStart() : void
+        + isSecure() : boolean
+        + setSecure() : void
+        + getKeyStorePath() : String
+        + setKeyStorePath() : String
+        + getKeyStorePasswor() : String
+        + setKeyStorePassword() : void
+        + getKeyManagerPassword() : String
+        + setKeyManagerPassword() : void
+
+        + Setting()
+    }
+}
+
+package com.sismics.reader.agent.ui
+{
+    class AgentFrame
+    {
+        - __serialVersionUID : long = 1L
+        - statusPanel : StatusPanel
+        - settingPanel : SettingPanel
+        - tabbedPane : JTabbedPane
+        - closeButton : JButton
+        - startedImage : Image
+        - stoppedImage : Image
+        + centerComponent() : void
+        + initComponent() : void
+        + showStatusPanel() : void
+        + showSettingPanel() : void
+        - setIcon() : void
+        + notifyDeploymentStatus() : void
+
+        + AgentFrame( readerAgent : ReaderAgent )
+        // need to import READERAGENT DO not forget 
+        
+    }
+    class SettingPanel
+    {
+        - __serialVersionUID : long = 1L
+        - __INTEGER_FORMAT : Format = DecimalFormat("0", DecimalFormatSymbols.getInstance(Locale.US)) 
+        - portTextField : JFormattedTextField
+        - contextPathComboBox : JComboBox<String>
+        - autoStartCheckBox : JCheckBox
+        - secureCheckBox : JCheckBox
+        - keyStorePasswordTextField : JFormattedTextField
+        - keyStorePathTextField : JFormattedTextField
+        - keyManagerPasswordTextField : JFormattedTextField
+        - defaultButton : JButton
+        - saveButton : JButton
+        - readerAgent : ReaderAgent
+        // need to import READERAGENT Do not forget
+        + readSetting() : void 
+        + saveSetting() : void
+        + initComponent() : void 
+        - getContextPath() : String
+        - getPort() : int
+        - getKeyStorePath() : String
+        - getKeyStorePassword() : String
+        - getKeyManagerPassword() : String
+
+        + SettingPanel(readerAgent : ReaderAgent)
+
+    }
+    class StatusPanel
+    {
+        // IT HAS A LOT OF DEPENDENICIES
+        - __serialVersionUID : long = 1L
+        - __DATE_FORMAT : DateFormat = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.MEDIUM)
+        - readerAgent : ReaderAgent
+        - statusTextField : JTextField
+        - startedTextField : JTextField
+        - memoryTextField : JTextField
+        - errorTextField : JTextArea
+        - startButton : JButton
+        - stopButton : JButton
+        - urlButton : JButton
+        - initComponent() : void
+        + notifyDeploymentStatus() : void <<override>>
+        
+        + StatusPanel(readerAgent : ReaderAgent)
+
+    }
+    class TrayController
+    {
+        - readerAgent : ReaderAgent 
+        - trayIcon : TrayIcon
+        - openAction : Action
+        - controlPanelAction : Action
+        - hideAction : Action
+        - startedImage : Image
+        - stoppedImage : Image
+        + showMessage() : void
+        + createImage() : Image
+        - createMenuItem() : MenuItem
+        + uninstallComponents() : void
+        - setTrayImage() : void 
+        + notifyDeploymentStatus() : void <<override>>
+
+        + TrayController( readerAgent : ReaderAgent )
+    }
+}
+
+package com.sismics.reader.agent
+{
+    class ReaderAgent
+    {
+        // HAS A LOT OF DEPENDENICIES
+        - __listeners : List<DeploymentStatusListener> = ArrayList<DeploymentStatusListener>()
+        - __trayController : TrayController 
+        - frame : AgentFrame
+        - elevated : boolean
+        - __readerDeployer : ReaderDeployer 
+        - __setting : Setting
+        + notifyDeploymentInfo() : void
+        - setLookAndFeel() : void
+        + checkElevation() : void
+        - isElevationNeeded() : boolean
+        + addListener() : void
+        + showStatusPanel() : void 
+        + showTrayIconMessage() : void
+        + exit() : void
+        + openBrowser() : void
+        - start() : void 
+        + main() : void
+        + getReaderDeployer() : ReaderDeployer
+        - isElevated() : boolean
+        + getSetting() : Setting 
+
+        + ReaderAgent()
+    }
+}
+
+package com.sismics.util
+{
+    class EnvironmentUtil
+    {
+        - _OS_NAME_ : String
+        - _OS_VERSION_ : String
+        - _WINDOWS_APPDATA_ : String
+        - _MAC_OS_USER_HOME_ : String
+        - _READER_HOME_ : String
+
+        + _isWindows_() : boolean
+        + _isMacOs_() : boolean
+        + _isUnix_() : boolean
+        + _getOsVersion_() : String
+        + _getWindowsAppData_() : String
+        + _getMacOsUserHome_() : String
+        + _getReaderHome_() : String
+    }
+
+    class MessageUtil
+    {
+        - __locale__ : Locale = Locale.getDefault() <<final>>
+        + __getMessage__ : String
+    }
+
+    ReaderAgent ..> DeploymentStatus
+    ReaderAgent ..> DeploymentStatusListener
+    ReaderAgent ..> ReaderDeployer
+    ReaderAgent ..> Setting
+    ReaderAgent ..> AgentFrame
+    ReaderAgent ..> TrayController
+    ReaderAgent ..> EnvironmentUtil
+
+    TrayController --|> DeploymentStatusListener
+
+    TrayController ..> ReaderAgent
+    TrayController ..> DeploymentStatusListener
+    TrayController ..> DeploymentStatus
+    TrayController ..> DeploymentStatus.ServerState
+    TrayController ..> MessageUtil
+
+    StatusPanel --|> DeploymentStatusListener
+
+    StatusPanel ..> ReaderAgent
+    StatusPanel ..> DeploymentStatus
+    StatusPanel ..> DeploymentStatus.ServerState
+    StatusPanel ..> DeploymentStatusListener
+    StatusPanel ..> MessageUtil
+
+    SettingPanel ..> ReaderAgent
+    SettingPanel ..> Setting
+    SettingPanel ..> MessageUtil
+
+    AgentFrame --|> DeploymentStatusListener
+
+    AgentFrame ..> ReaderAgent
+    AgentFrame ..> DeploymentStatusListener
+    AgentFrame ..> DeploymentStatus
+    AgentFrame ..> MessageUtil
+
+    Setting ..> EnvironmentUtil
+    Setting ..> MessageUtil
+
+    ReaderDeployer ..> ReaderAgent
+    ReaderDeployer ..> ServerState
+    ReaderDeployer ..> Setting
+    ReaderDeployer ..> MessageUtil
+    
+}
+
+@enduml
+

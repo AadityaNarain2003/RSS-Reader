@@ -1,0 +1,249 @@
+@startuml UserManagementSubsystem
+
+package "User Management Subsystem" {
+
+    package com.sismics.reader.core.dao.jpa.criteria{
+
+        ' FeedSubscriptionMapper.java
+    '     class FeedSubscriptionMapper{
+    '         + map(o: Object): FeedSubscriptionDto
+    '     }                                                                                            
+    ' }
+    ' FeedSubscriptionMapper ..> com.sismics.reader.core.dao.jpa.dto.FeedSubscriptionDto : overrides
+    package com.sismics.reader.core.dao.jpa.mapper{
+        ' UserMapper.java
+        class UserMapper extends ResultMapper {
+            + map(o: Object[]): UserDto
+
+        }
+
+    }
+    UserMapper ..> com.sismics.reader.core.dao.jpa.dto.UserDto : overrides
+
+    package com.sismics.reader.core.dao.jpa{
+
+        ' AuthenticationTokenDao.java
+        class AuthenticationTokenDao{
+            + get(id: String): AuthenticationToken
+            + create(authenticationToken: AuthenticationToken): String
+            + delete(authenticationTokenId: String): void
+            + deleteOldSessionToken(userId: String): void
+            + updateLastConnectionDate(id: String): void
+        }
+
+        ' CategoryDao.java
+        class CategoryDao{
+            + create(category: Category): String
+            + update(category: Category): String
+            + reorder(category: Category, order: int): void
+            + delete(id: String):void
+            + getRootCategory(userId: String): Category
+            + getCategory(id: String, userId: String): Category
+            + getCategoryCount(parentId: String, userId: String): int
+            + findAllCategory(userId: String): List<Category>
+            + findSubCategory(parentId: String, userId: String): List<Category>
+        }
+
+
+    }
+    AuthenticationTokenDao ..> com.sismics.reader.core.model.jpa.AuthenticationToken : implements
+    CategoryDao ..> com.sismics.reader.core.model.jpa.Category : implements
+
+    package com.sismics.security{
+
+        interface IPrincipal {
+            + isAnonymous() : boolean
+            + getId() : String
+            + getLocale() : Locale
+            + getDateTimeZone() : DateTimeZone
+            + getEmail() : String
+        }
+
+        class AnonymousPrincipal implements IPrincipal {
+            + {static} ANONYMOUS : String = "anonymous"
+            - locale : Locale
+            - dateTimeZone : DateTimeZone
+            + isAnonymous() : boolean
+        }
+
+        class UserPrincipal implements IPrincipal{
+            - id : String
+            - name : String
+            - locale : Locale
+            - dateTimeZone : DateTimeZone
+            - email : String
+            - baseFunctionSet : Set<String>
+            + isAnonymous() : boolean
+        }
+    }
+
+
+
+
+
+    package com.sismics.util.filter {
+        abstract class SecurityFilter {
+            + {static} PRINCIPAL_ATTRIBUTE : String = "principal"
+            - {static} hasIdentifiedUser(request : HttpServletRequest) : boolean
+            - {static} injectUser(request : HttpServletRequest, user : User) : void
+            - {static} injectAuthenticatedUser(request : HttpServletRequest, user : User) : void
+            - {static} injectAnonymousUser(request : HttpServletRequest) : void
+            + init(filterConfig : FilterConfig) : void
+            + doFilter(req : ServletRequest, response : ServletResponse, filterChain : FilterChain) : void
+            # authenticate(request : HttpServletRequest) : {abstract} User
+        }
+        
+
+        class HeaderBasedSecurityFilter extends SecurityFilter {
+            + {static} AUTHENTICATED_USER_HEADER : String = "X-Authenticated-User"
+            - enabled : boolean
+            + init(filterConfig : FilterConfig) : void
+            + authenticate(request : HttpServletRequest) : User
+        }
+
+
+        class TokenBasedSecurityFilter extends SecurityFilter {
+            + {static} COOKIE_NAME : String = "auth_token"
+            + {static} TOKEN_LONG_LIFETIME : int = 3600 * 24 * 365 * 20
+            + {static} TOKEN_SESSION_LIFETIME : int = 3600 * 24
+            - {static} extractAuthToken(cookies : Cookie[]) : String
+            - {static} handleExpiredToken(dao : AuthenticationTokenDao, authTokenID : String) : void
+            - {static} isTokenExpired(authenticationToken : AuthenticationToken) : boolean
+            + authenticate(request : HttpServletRequest) : User
+        }
+
+    }
+    SecurityFilter --   com.sismics.reader.core.model.jpa.User 
+    SecurityFilter --o   com.sismics.security.AnonymousPrincipal
+    SecurityFilter --o   com.sismics.security.UserPrincipal
+    HeaderBasedSecurityFilter --  com.sismics.reader.core.model.jpa.User
+    TokenBasedSecurityFilter -- com.sismics.reader.core.dao.jpa.AuthenticationTokenDao
+    TokenBasedSecurityFilter -- com.sismics.reader.core.model.jpa.AuthenticationToken
+    TokenBasedSecurityFilter -- com.sismics.reader.core.model.jpa.User
+
+    ' package "com.sismics.reader.core.dao.jpa.dto"{
+    '     class UserArticleDao {
+    '         + create(UserArticle userArticle) : String
+    '         + update(UserArticle userArticle) : UserArticle
+    '         + markAsRead(UserArticleCriteria criteria) : void
+    '         + delete(String id) : void
+    '         + getUserArticle(String id, String userId) : UserArticle
+    '         + getQueryParam(UserArticleCriteria criteria, FilterCriteria filterCriteria) : QueryParam
+    '     }
+
+    '     class UserArticle {
+    '         + String id
+    '         + Date createDate
+    '         + Date readDate
+    '         + Date starredDate
+    '         + Date deleteDate
+    '     }
+
+    '     class UserArticleCriteria {
+    '         + Boolean isVisible
+    '         + Boolean isUnread
+    '         + Boolean isStarred
+    '         + String userId
+    '         + String feedId
+    '         + List<String> articleIdIn
+    '         + String articleId
+    '         + String userArticleId
+    '         + Boolean isSubscribed
+    '         + String categoryId
+    '         + Date articlePublicationDateMax
+    '         + Date userArticleStarredDateMax
+    '         + String articleIdMax
+    '         + String userArticleIdMax
+    '         + Boolean isFetchAllFeedSubscription
+    '     }
+    ' }
+    ' JobEventDao --|> com.sismics.util.jpa.BaseDao : extends
+    ' UserArticleDao ...> com.sismics.reader.core.dao.jpa.dto.UserArticleDto : uses
+    ' UserArticleDao *-- com.sismics.reader.core.dao.jpa.criteria.UserArticleCriteria : uses
+    ' UserArticleDao *-- com.sismics.reader.core.dao.jpa.mapper.UserArticleMapper : uses
+    ' UserArticleDao ...> com.sismics.reader.core.model.jpa.UserArticle : uses
+    ' UserArticleDao *-- com.sismics.reader.core.util.jpa.SortCriteria : uses
+    ' UserArticleDao *-- com.sismics.util.jpa.filter.FilterCriteria : uses
+    ' UserArticleDao ...> com.sismics.util.jpa.QueryParam : uses
+    
+    
+    package "com.sismics.reader.core.dao.jpa.dto"{
+        class UserDto {
+            - String id
+            - String localeId
+            - String username
+            - String email
+            - Long createTimestamp
+
+            ' + getId(): String
+            ' + setId(String id): void
+            ' + getLocaleId(): String
+            ' + setLocaleId(String localeId): void
+            ' + getUsername(): String
+            ' + setUsername(String username): void
+            ' + getEmail(): String
+            ' + setEmail(String email): void
+            ' + getCreateTimestamp(): Long
+            ' + setCreateTimestamp(Long createTimestamp): void
+        }
+
+    }
+    package "com.sismics.reader.resource" {
+        abstract class BaseResource {
+            # authenticate(): boolean
+            # checkBaseFunction(baseFunction: BaseFunction)
+            # principal: IPrincipal
+            # hasBaseFunction(baseFunction: BaseFunction): boolean
+        }
+
+        class UserResource extends BaseResource {
+            + register(username: String, password: String, email: String): Response
+            + login(username: String, password: String): Response
+            + logout(): Response
+            + update(password: String, email: String, theme: String, locale: String): Response
+            + delete(): Response
+            + info(): Response
+        }
+
+        class ThemeResource extends BaseResource {
+            + list(): Response
+            + get(id: String): Response
+        }
+
+        class LocaleResource extends BaseResource {
+            + list(): Response
+            + set(id: String): Response
+        }
+    }
+
+    ' package "rest.constant" {
+    '     enum BaseFunction {
+    '         ADMIN
+    '         PASSWORD
+    '         IMPORT
+    '     }
+    ' }
+
+    ' package "rest.util" {
+    '     class ValidationUtil {
+    '         + validateTheme(theme: String): String
+    '         + validateLocale(locale: String): String
+    '         + validatePassword(password: String): String
+    '     }
+    ' }
+
+    ' package "rest.dao" {
+    '     class ThemeDao {
+    '         + findAll(): List<String>
+    '         + getById(id: String): Theme
+    '     }
+    ' }
+
+    ' package "core.util" {
+    '     class UserUtil {
+    '         + getUsername(): String
+    '         + getUserId(): String
+    '     }
+    ' }
+}
+@enduml

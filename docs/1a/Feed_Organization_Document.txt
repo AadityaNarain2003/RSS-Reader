@@ -1,0 +1,95 @@
+Name: com.sismics.reader.core.service.IndexingService
+Task: Manages article indexing and search functionality. Maintains Lucene search index, handles
+article search queries, manages index rebuilding and optimization, and provides directory
+management for search indices.
+
+Name: com.sismics.reader.rest.resource.CategoryResource
+Task: Manages feed categories through REST endpoints. Handles category CRUD operations,
+manages category ordering, and provides category listing.
+
+Name: com.sismics.reader.rest.resource.StarredResource
+Task: Manages starred articles through REST endpoints. Handles article starring/unstarring, provides
+starred article listing, and manages bulk star operations.
+
+Name: com.sismics.reader.rest.resource.SearchResource
+Task: Provides search functionality through REST endpoints. Handles article search queries,
+manages search results pagination, and integrates with IndexingService.
+
+Name: com.sismics.reader.core.util.LuceneUtil
+Task: Manages Lucene operations. Handles index optimization, manages index rebuilding, and
+provides search utilities.
+
+Name: FeedCriteria
+Task: It is a data container used to store and manage criteria for querying RSS/Atom feeds. It encapsulates the properties and methods needed to define and retrieve these criteria.
+
+Name: ArticleCriteria
+Task: used to define criteria for querying or filtering articles in a database. It encapsulates the criteria for querying articles. It provides getter and setter methods for each field, allowing users to specify the criteria for filtering articles
+
+Name: FeedSubscriptionCriteria
+Task: It is used to define criteria for querying or filtering feed subscriptions in a database.
+
+Name: JobCriteria
+Task: It is used to define criteria for querying or filtering jobs in a database.
+
+Name: UserArticleCriteria
+Task: It is used to define criteria for querying or filtering user-specific articles in a database.
+
+Name: ArticleMapper
+Task: Overrides map method of ArticleDto
+
+Name: FeedMapper
+Task: Overrides map method of FeedDto
+
+Name: UserArticleMapper
+Task: Overrides map method of UserArticleDto
+
+Name: ArticleDao
+Task: that provides methods to interact with the database for performing CRUD (Create, Read, Update, Delete) operations on Article entities. It extends BaseDao and uses ArticleCriteria for filtering and querying articles
+
+Name: RoleBaseFunctionDao
+Task: Provides a data access mechanism for retrieving base functions assigned to a role.
+Ensures that only active roles and non-deleted base functions are retrieved.
+Supports role-based access control (RBAC) by determining user permissions.
+
+Name: FeedSynchronizationDao
+Task: Manages feed synchronization records in the database.
+Logs feed synchronization events when a feed is updated or refreshed.
+Deletes outdated synchronization records to optimize database performance.
+Retrieves synchronization logs for diagnostic and reporting purposes.
+
+Name: LocaleDao
+Task: Provides data access for locale entities.
+Retrieves locale details by locale ID or fetches all available locales.
+Supports user preferences and localization features within the system.
+Ensures proper handling of different language and regional settings.
+
+Name: UserDao
+Task:Manages user-related data persistence operations.
+Provides CRUD (Create, Read, Update, Delete) operations for user accounts.
+Handles authentication and password management.
+Supports user deletion and ensures data consistency across related entities.
+
+Name: JobEventDao
+Task: Manages job event records in the database.
+Logs job-related activities and updates for tracking purposes.
+Supports filtering and retrieval of job events based on criteria like job ID.
+Aids in debugging and audit logging.
+
+Name: BaseResourse
+Task: The BaseResource class is a base class for API communication 
+in an Android application. It provides common 
+networking functionality for API access, including
+
+Name: ResultMapper
+Task: The ResultMapper<T> class is an abstract utility class that 
+helps map database query results (typically from a raw SQL query)
+into DTOs (Data Transfer Objects).
+
+Name: FeedDto
+Task: The FeedDto class is a Data Transfer Object (DTO) that represents a feed in a simplified way for use in APIs or services.
+
+Name ArticleDto
+Task: The ArticleDto class is a Data Transfer Object (DTO) that represents an article from an RSS feed. It is used to transfer article data between different layers (e.g., database, services, and API responses).
+
+Name: FeedSubscriptionDto
+Task: Task: The FeedSubscriptionDto class is a Data Transfer Object (DTO) that represents an feed from an RSS feed.

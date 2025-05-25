@@ -1,0 +1,99 @@
+Name: com.sismics.reader.rest.resource.UserResource
+Task: Manages user operations through REST endpoints. Handles user registration and
+authentication, manages user preferences, and provides user information.
+
+Name: com.sismics.reader.rest.resource.ThemeResource
+Task: Manages UI themes through REST endpoints. Lists available themes, handles theme selection,
+and validates theme settings.
+
+Name: com.sismics.reader.rest.resource.LocaleResource
+Task: Manages localization through REST endpoints. Lists available locales, handles locale selection,
+and manages language preferences.
+
+Name: com.sismics.security.IPrincipal
+Task: Interface for the principal object.
+
+Name: com.sismics.security.AnonymousPrincipal
+Task: Principal object for anonymous users.
+
+Name: com.sismics.security.UserPrincipal
+Task: Principal object for authenticated users.
+
+Name: com.sismics.rest.util.filter.SecurityFilter
+Task: Abstract security filter for user authentication, that injects corresponding users into the request.
+Successfully authenticated users are injected as UserPrincipal, or as AnonymousPrincipal
+otherwise. If a user has already been authenticated for the request, no further authentication
+attempt is made.
+
+Name: com.sismics.rest.util.filter.HeaderBasedSecurityFilter
+Task: A header-based security filter that authenticates a user using the "X-Authenticated-User"
+request header as the user ID.
+
+Name: com.sismics.rest.util.filter.TokenBasedSecurityFilter
+Task: Used to authenticate the user having an active session via an authentication token stored in
+database. The filter extracts the authentication token stored in a cookie. If the cookie exists and
+the token is valid, the filter injects a UserPrincipal into a request attribute. If not, the user is
+anonymous, and the filter injects a AnonymousPrincipal into the request attribute.
+
+Name: com.sismics.reader.core.util.ValidationUtil
+Task: Handles input validation. Validates themes, locales, passwords, and user inputs.
+
+Name: com.sismics.reader.core.util.UserUtil
+Task: User-related utilities. Manages user context, provides user information, and handles user-
+specific operations.
+
+Name: FeedSubscriptionMapper
+Task: Overrides map method of FeedSubscriptionDto
+
+Name: UserMapper
+Task: Overrides map method of UserDto
+
+Name: AuthenticationTokenDao
+Task: This class contains several methods that facilitate the creation, retrieval, deletion, and updating of authentication tokens.
+
+Name: CategoryDao
+Task: CategoryDao class encapsulates the logic required to manage category data within the database, providing functionality for category creation, modification, deletion, reordering, and retrieval
+
+Name: FeedDao
+Task: encapsulates the logic for managing feed entities, handling their lifecycle (creation, update, deletion) and providing query capabilities to filter and sort feed data
+
+Name: AnonymousPrincipal
+Task: Principal object for anonymous users
+
+Name: UserPrincipal
+Task: Principal object for authenticated users
+
+Name: SecurityFilter
+Task: abstract security filter for user authentication, that injects corresponding users into the request.
+Successfully authenticated users are injected as UserPrincipal, or as AnonymousPrincipal otherwise.
+If an user has already been authenticated for the request, no further authentication attempt is made.
+
+Name: HeaderBasedSecurityFilter
+Task: A header-based security filter that authenticates an user using the "X-Authenticated-User" request header as the user ID.
+
+Name: TokenBasedSecurityFilter
+Task: Used to authenticate the user having an active session via an authentication token stored in database.
+The filter extracts the authentication token stored in a cookie.
+If the cookie exists and the token is valid, the filter injects a UserPrincipal into a request attribute.
+If not, the user is anonymous, and the filter injects a AnonymousPrincipal into the request attribute.
+
+Name: UserArticleDao
+Task: Manages the relationship between users and articles.
+Tracks user-specific article states (read, starred, categorized).
+Supports querying, filtering, and sorting of user articles.
+Facilitates feed and subscription management by linking users with articles.
+
+Name: BaseResourse
+Task: The BaseResource class is a base class for API communication 
+in an Android application. It provides common 
+networking functionality for API access, including
+
+Name: UserDto
+Task: The UserDto class is a Data Transfer Object (DTO) used
+to transfer user-related data between different layers of the
+application (e.g., between the database and the API).
+
+Name: ResultMapper
+Task: The ResultMapper<T> class is an abstract utility class that 
+helps map database query results (typically from a raw SQL query)
+into DTOs (Data Transfer Objects).

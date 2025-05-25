@@ -1,0 +1,17 @@
+removed the logger functions as it is not related to the functionality
+in the dao objects and dto objects removed the setter and getter methods as they are kind of unrelated and makes the diagram clumsy
+package "com.sismics.reader.core.dao.jpa.dto"{ - removed all the getter and setter methods
+not considering the threadlocal context and dialectutil as they are something like implementation details 
+and also not considering the javax.persistence and java.util and ord package 
+removing com.google.common.collect.Sets
+import org.mindrot.jbcrypt.BCrypt;
+import org.codehaus.jackson.JsonNode;
+import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jackson.node.ArrayNode;
+import org.codehaus.jackson.node.ObjectNode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.InputStream;
+import java.text.MessageFormat;
+import java.util.Date;

@@ -1,0 +1,1 @@
+{"reader-core":{"name":"reader-core","packages":{"com.sismics.reader.core.dao.file.rss":{"packageName":"com.sismics.reader.core.dao.file.rss","isAll":false,"classes":["Lcom.sismics.reader.core.dao.file.rss.RssReader.FeedType","Lcom.sismics.reader.core.dao.file.rss.RssReader","Lcom.sismics.reader.core.dao.file.rss.RssReader.Element"]}}}}

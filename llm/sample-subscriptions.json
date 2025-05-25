@@ -1,0 +1,115 @@
+{
+  "categories": [
+    {
+      "id": "admin-root",
+      "folded": false,
+      "subscriptions": [
+        {
+          "id": "3c44393b-18d1-4090-b316-af09a21473a7",
+          "title": "TechCrunch",
+          "url": "https://techcrunch.com/feed/",
+          "unread_count": 12,
+          "sync_fail_count": 0
+        }
+      ],
+      "categories": [
+        {
+          "id": "64ce2cc5-29d1-4008-8181-b32a64ed322e",
+          "name": "AI",
+          "folded": true,
+          "subscriptions": [
+            {
+              "id": "cdd05800-5225-4fdb-a96c-f092a6ac7bff",
+              "title": "NewsAPI: ai.google",
+              "url": "ai.google",
+              "unread_count": 0,
+              "sync_fail_count": 0
+            },
+            {
+              "id": "c7165274-c1cd-4682-82e5-088cd393959c",
+              "title": "AI News",
+              "url": "https://www.artificialintelligence-news.com/feed/",
+              "unread_count": 10,
+              "sync_fail_count": 0
+            },
+            {
+              "id": "1ba35603-9f50-4cd2-a439-75852e1c9959",
+              "title": "NewsAPI: news.mit.edu",
+              "url": "news.mit.edu",
+              "unread_count": 0,
+              "sync_fail_count": 0
+            }
+          ],
+          "categories": [],
+          "unread_count": 10
+        },
+        {
+          "id": "f9b4abe8-5fd2-4981-af78-bc8b6f87b2e4",
+          "name": "Cybersecurity",
+          "folded": true,
+          "subscriptions": [
+            {
+              "id": "72e75566-c0c9-4c7e-b35f-8e9f4d3a1df1",
+              "title": "SecurityWeek",
+              "url": "https://www.securityweek.com/feed/",
+              "unread_count": 11,
+              "sync_fail_count": 0
+            },
+            {
+              "id": "23f82608-ad4d-4b0f-873a-45813ac1353b",
+              "title": "BleepingComputer",
+              "url": "https://www.bleepingcomputer.com/feed/",
+              "unread_count": 11,
+              "sync_fail_count": 0
+            }
+          ],
+          "categories": [
+            {
+              "id": "a8b02712-2ad2-4169-b606-3a792fae1fc8",
+              "name": "Tools",
+              "folded": false,
+              "subscriptions": [
+                {
+                  "id": "8cc00613-e4ec-4087-a702-e56fb04dca0d",
+                  "title": "portswigger.net",
+                  "url": "portswigger.net",
+                  "unread_count": 7,
+                  "sync_fail_count": 0
+                }
+              ],
+              "categories": [
+                {
+                  "id": "31ee41a6-1173-49f2-b00e-2882d12583f1",
+                  "name": "Bitcoin",
+                  "folded": false,
+                  "subscriptions": [
+                    {
+                      "id": "fb8c8774-6c7a-43de-9dd3-cae5d79551d9",
+                      "title": "Bitcoin News",
+                      "url": "https://news.bitcoin.com/feed/",
+                      "unread_count": 10,
+                      "sync_fail_count": 0
+                    },
+                    {
+                      "id": "181b587b-1901-46d9-90e8-a396c27d2e0a",
+                      "title": "Cointelegraph.com News",
+                      "url": "https://cointelegraph.com/rss",
+                      "unread_count": 11,
+                      "sync_fail_count": 0
+                    }
+                  ],
+                  "categories": [],
+                  "unread_count": 21
+                }
+              ],
+              "unread_count": 28
+            }
+          ],
+          "unread_count": 50
+        }
+      ],
+      "unread_count": 72
+    }
+  ],
+  "unread_count": 72
+}

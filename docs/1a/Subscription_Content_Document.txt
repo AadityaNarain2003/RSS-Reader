@@ -1,0 +1,109 @@
+Name: com.sismics.reader.core.service.FeedService
+Task: Core service responsible for RSS feed management and synchronization. Manages feed
+synchronization with scheduled updates, handles feed parsing and article extraction, maintains
+feed metadata and content, and manages feed subscriptions and updates.
+
+Name: com.sismics.reader.rest.resource.SubscriptionResource
+Task: Manages feed subscriptions through REST endpoints. Handles feed subscription CRUD
+operations, manages feed imports and exports, handles favicon operations, and provides
+subscription listing and filtering.
+
+Name: com.sismics.reader.rest.resource.ArticleResource
+Task: Manages article operations through REST endpoints. Handles article reading states, manages
+article metadata, and provides article content access.
+
+Name: com.sismics.reader.rest.resource.AllResource
+Task: Provides aggregated article views through REST endpoints. Retrieves all articles with
+pagination, manages bulk article operations, and provides unified article access.
+
+Name: com.sismics.reader.core.util.ArticleAssembler
+Task: Converts articles to JSON format. Assembles article DTOs, formats article data, and provides
+JSON conversion.
+
+Name: RssExtractor
+Task: The RssExtractor class is designed to extract RSS and Atom feed URLs from an HTML page. It reads an HTML page from an input stream and parses it using an XML parser. 
+
+Name: StarredArticleImportedListener
+Task: Defines an interface for handling events related to starred article imports.
+Implementing classes listen for import completion and perform necessary actions.
+
+Name: StarredReader
+Task: Reads and processes starred.json files exported from Google Takeout.
+Extracts starred articles, validates their structure, and transforms them into a usable format.
+Notifies StarredArticleImportedListener when an import is complete.
+
+Name: OpmlFlattener
+Task: Converts an OPML hierarchical outline into a flat list.
+Maintains feed categories while ensuring the output is easy to process.
+Useful for feed aggregation applications
+
+Name: OpmlReader
+Task: Uses SAX (Simple API for XML) parsing to read OPML files.
+Converts the OPML file into a structured tree of Outline objects.
+Supports nested outlines and ensures well-formed parsing of OPML documents.
+
+Name: AtomArticleCommentUrlGuesserStrategy
+Task: Extracts the most relevant comment URL from an Atom feed entry.
+Analyzes link elements within the feed to find the best candidate for user comments.
+Ensures correct URL selection for better user experience in RSS readers.
+
+Name: AtomUrlGuesserStrategy
+Task: Determines the most appropriate site URL and feed URL from an Atom feed.
+Parses multiple link elements and selects the most relevant ones.
+Helps in identifying the primary website and feed endpoint for further processing.
+
+Name: GuidFixer
+Task: Ensures that every article has a unique GUID (Globally Unique Identifier).
+If a GUID is missing, it generates one based on available article metadata.
+Prevents duplicate articles and maintains consistency in feed readers.
+
+Name: ReaderStandardAnalyzer
+Task: Processes and tokenizes textual data for indexing and search functionalities.
+Cleans and normalizes feed titles and descriptions by removing HTML tags.
+Converts text to lowercase for case-insensitive searches.
+Removes common stopwords to improve search relevance.
+Configurable token length for better indexing precision.
+
+Name: AtomLink
+Task: It is filled with getter and setter functions for 
+relation type, content type and references.
+
+Name: RssReader
+Task: The overall task of RssReader is to parse and extract data
+from RSS, Atom, and RDF feeds. It processes XML data using SAX 
+(Simple API for XML) and converts it into structured objects 
+like Feed and Article.
+
+Name: AtomArticleUrlGuesserStrategy
+Task: It is to Guess the URL of the Article
+
+Name: XmlReader
+Task: Text reader, which uses a BOM (Byte Order Mark) to identify the encoding to
+be used. This also has the side effect of removing the BOM from the input
+stream (when present). If no BOM is present, the encoding will be searched
+from the XML header.
+
+Name: Outline
+Task: Is filled with getter and setter for OPML outline
+
+Name: FeedDto
+Task: Contains the Data Trasfer Object for Feed
+
+Name: ArticleDto
+Task: Contains the Article Data Trasfer Object for Article
+
+Name: UserArticleDto
+Task: Contains the UserArticle Data Transfer Object
+
+Name: FeedSubscriptionDto
+Task: Cotains the FeedSubscription Dta Transfer Object
+
+Name: BaseDao
+Task: A class is a generic Data Access Object (DAO) abstraction 
+that provides methods to query a database using criteria-based 
+searches. It is an abstract class, meaning it is meant to be 
+extended by specific DAO implementations for different entities
+
+Name: ArticleResource
+Task: The ArticleResource class is an API client for interacting with the /article endpoints in a remote web service. It provides methods to mark articles as read or unread by sending HTTP POST requests using Loopj’s AsyncHttpClient.
+
